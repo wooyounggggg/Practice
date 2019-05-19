@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>transition</title>
+  <style>
+    .box{
+      background-color:green;
+      color:white;
+      transition:all 0.5s ease-in-out;
+    }
+    .box:active{
+      background-color:red;
+      color:blue;
+    }
+/*  transition ->   (:hover, :active, :focus), :visited */
+  </style>
+</head>
+<body>
+  <span class="box">Text</span>
+</body>
+</html>

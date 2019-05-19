@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Position</title>
+  <style>
+    body,html{
+      height:100%;
+      margin:0;
+      padding:0;
+    }
+    body{
+      height:400%;
+      background-color:red;
+    }
+/*  Positiong Fixed : position fixed는 위치를 잡아주지 않으면 안 보이게 됨.
+    
+    #boxOne{
+      height:300px;
+      width:300px;
+      background-color:yellow;
+      position:static;
+    }
+    position : 스크롤 내리면 사라짐(원 위치에만 있다)  
+    #boxTwo{
+      height:300px;
+      width:100%;
+      background-color:green;
+      position:fixed;
+      right:0;
+      left:500px;
+      bottom:30px;
+    }
+    fixed : 스크롤 내려도 그대로(계속 그 자리에 고정되어 보임)   */
+    .child{
+      
+    }
+    .abs-box{
+      width:400px;
+      height:400px;
+      background-color:yellow;
+      position:relative; /* relative를 설정하면 abs-child가 부모 element를 abs-box로 인식함.
+        그렇지 않은 경우에는 body를 부모로 인식(body는 늘상 relative이다.)
+      */
+    }
+    .abs-child{
+      width:100px;
+      height:100px;
+      background-color:green;
+      position:absolute;
+      right:10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="abs-box">
+    <div class="abs-child"></div>
+  </div>
+<!-- Position Fixed
+  <div id="boxOne">
+    <div class="child"></div>
+  </div>
+  <div id="boxTwo"> -->
+    
+  </div>
+</body>
+</html>
