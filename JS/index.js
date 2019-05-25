@@ -1,1 +1,4 @@
-alert('JS import!')
+// document:Object
+const title=document.getElementById('title');
+// console.log(title);
+title.innerHTML="Hi! From JS"
