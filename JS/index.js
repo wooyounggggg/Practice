@@ -1,9 +1,29 @@
-// document:Object
-const title=document.querySelector('#title');
+const title = document.querySelector("#title");
+const CLICKED_CLASS="clicked";
+
 function handleClick(){
-  title.style.color="blue";
+  title.classList.toggle('clicked');
+//   const currentClassList=title.classList;
+//   if(currentClassList.contains('clicked'))
+//     currentClassList.remove('clicked');
+//   else currentClassList.add('clicked');
 }
-title.addEventListener("click",handleClick);
+function init(){
+  title.addEventListener("click",handleClick);
+}
+init();
+
+function handleOffline(){
+  console.log('offline!');
+}
+function handleOnline(){
+  console.log('online!');
+}
+window.addEventListener("offline",handleOffline);
+window.addEventListener("online",handleOnline);
+// document:Object
+// const title=document.querySelector('#title');
+   
 // window.addEventListener("resize", handleResize);
 // const title2=document.querySelector('#title');
 // console.log(`title1==title2 : ${title==title2}`);
