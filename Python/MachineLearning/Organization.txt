@@ -1,0 +1,26 @@
+Machine Learning
+  -"Field of study that gives computers the ability to learn without being
+  explicitly programmed" by Arthur Samuel
+
+Supervised/Unsupervised Learning
+  -Supervised
+    :Learning with labeled examples - traning set(Data Set)
+    
+  -Unsupervised
+    :Un-labeled data set
+    :Google News Grouping
+    :Word Clustering
+
+Most common problem type in ML
+  -Image Labeling : Learning from tagged images
+  -Email Spam Filter : Learning from labeled email
+  -Predicting exam score : Learning from previous exam score and time spent
+
+Types of supervised Learning Model
+  -Predicting final exam score based on time spent 
+    :regression
+  -Pass/NonP based on time spent
+    :binary classification
+  -Letter Grade(A,B,C,E and F) based on time spent
+    :multi-labeled classification
+    
