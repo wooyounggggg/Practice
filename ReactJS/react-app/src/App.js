@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import TOC from "./components/TOC";
 import ReadContent from "./components/ReadContent";
-import CreateContent from "./components/CreateContent";
+import Create_Content from "./components/Create_Content";
 import Subject from "./components/Subject";
 import Control from "./components/Control";
 import './App.css';
@@ -11,7 +11,7 @@ class App extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			mode:'welcome',
+			mode:'create',
 			title:'HTML',
 			subject:{title:"WEB", sub:"World Wide Web!"},
 			welcome:{title:'Welcome', desc:'Hello, React!'},
@@ -37,7 +37,13 @@ class App extends Component {
 				 _article= <ReadContent title={_title} desc={_desc}></ReadContent>;
 			 }
 		}else if(this.state.mode==='create'){
-			_article=<CreateContent></CreateContent>;
+			_article = <Create_Content onSubmit={function(_title,_desc){
+						let content={id:this.state.contents.length+1,
+									title:_title
+									desc:_desc
+									};
+						this.state.contents.push(content);
+					}.bind(this)}></Create_Content>;
 		}
 		return (
 			<div className="App">
