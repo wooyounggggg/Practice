@@ -1,6 +1,6 @@
 function getUser() { // 로딩 시 사용자 가져오는 함수
     var xhr = new XMLHttpRequest();
-    xhr.onload = function () {
+    xhr.onload = function () { //이 부분을 접어보면 의도가 잘 보임!
         if (xhr.status === 200) {
             var users = JSON.parse(xhr.responseText);
             var list = document.getElementById('list');
