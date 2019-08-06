@@ -27,4 +27,16 @@ app.use(session({
 app.use(flash()); //middle ware 순서 중요!!
 
 app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
+//404 error : 400번대 error -> client단 에러!
+app.use((req, res, next) => {
+    res.status(404).send('Not Found!');
+});
+
+//500 error : 500번대 error -> server단 에러!
+app.use((err, req, res) => {
+    console.log(err);
+    res.status(500).send('SERVER ERROR');
+});
 module.exports = app;
