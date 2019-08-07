@@ -8,6 +8,10 @@ const flash = require('connect-flash');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 
+//view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
 app.use(logger('dev'));
 app.use(express.static(path.join(__dirname, 'public'))); //정적 파일용 미들웨어
 app.use(express.json());

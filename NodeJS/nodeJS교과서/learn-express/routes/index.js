@@ -11,18 +11,9 @@ router.use((req, res, next) => {
   next();
 });
 
-router.get('/', (req, res, next) => {
-  console.log('세번째 라우트 미들웨어');
-  try {
-    throw new Error('server fucking');
-  } catch (e) {
-    next(e);
-  }
-});
-
 router.get('/', (req, res) => { //얘네도 전부다 조건부로 동작하는 라우팅 미들웨어임!!
   console.log('세 번째 미들웨어');
-  res.send('Hello Express!');
+  res.render('test');
 });
 router.post('/', (req, res) => {
 

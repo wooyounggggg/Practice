@@ -1,0 +1,17 @@
+doctype html
+html
+    head
+        -const title='Express'
+        -const title2='hi'
+        -const variable='true'
+        title= title+' '+title2
+        link(rel='stylesheet', href='/stylesheets/style.css')
+        style.
+            p{
+                color:red;
+            }
+    body
+        include header
+        block content
+        include footer
+        block script
