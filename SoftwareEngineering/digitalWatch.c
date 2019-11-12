@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
+#include <time.h>
 #define TRUE 1 == 1
 #define FALSE 1 != 1
 #define ON 1
@@ -18,6 +19,7 @@
 #define STOP_WATCH_PAUSE 5   // stopWatch mode == stopWatch->pause
 
 //timeKeepingUnit preset
+#define NONE -1
 #define SEC 0
 #define HOUR 1
 #define MIN 2
@@ -25,15 +27,26 @@
 #define MONTH 4
 #define DAY 5
 
+//alarmUnit preset
+#define NONE -1
+#define HOUR 0
+#define MIN 1
+
 #define INPUT_BUTTON_SIZE 100
 #define PROCESSED_BUTTON_SIZE 5
 typedef struct AlarmData
 {
-    int indicator;
+    int alarmIndicator;
+    int alarmState;
     int hour;
     int min;
 } AlarmData;
 
+typedef struct PassingData //Data to backlight & alarm controller
+{
+    AlarmData *alarm;
+    char button;
+} PassingData;
 typedef struct StateData
 {
     char mode;
@@ -42,10 +55,11 @@ typedef struct StateData
     char alarmUnit;
 } StateData;
 
+void setDefault(StateData *, AlarmData *);
 void decideMainProcess(StateData *, AlarmData *, char); //Decide main controller process based on state, button and alarm data
 void buttonInitialize(char *, int, int);                //Initialize button in range begin ~ MAX
-void *alarmThread(void *);                              //Alarm controller thread
-void *backlightThread(void *);                          //Backlight controller thread
+void *alarmThreadFunction(void *);                      //Alarm controller thread
+void *backlightThreadFunction(void *);                  //Backlight controller thread
 void buttonProcess(char *, char *);                     //Process simultaneous input processing
 void timeKeepingMode(StateData *);                      // Enable timeKeepingMode
 void timeKeepingSet(StateData *);                       // Enable timeKeepingSet
@@ -67,24 +81,48 @@ int main(void)
             "SU",
         };
     char inputButton[INPUT_BUTTON_SIZE] = {0};
-    char processedButton[4];
+    char processedButton[PROCESSED_BUTTON_SIZE];
     StateData state;
     AlarmData alarm;
-    pthread_t Alarm;
-    pthread_t BackLight;
+    PassingData pass;
+    pthread_t alarmThread;
+    pthread_t backlightThread;
     int i;
-    // pthread_create(&Alarm, NULL, alarmThread, void*);
-    // pthread_create(&BackLight, NULL, backlightThread, void*);
+    int alarmThreadCounter = 0;
+    int backlightThreadCounter = 0;
+    setDefault(&state, &alarm); //state, alarm initialize
+    pass.alarm = &alarm;
     while (1)
     {
         printf("Button : ");
         scanf("%s", inputButton);
         buttonProcess(inputButton, processedButton);
-        for (i = 0; i < INPUT_BUTTON_SIZE; i++)
+        for (i = 0; i < PROCESSED_BUTTON_SIZE; i++)
         {
             if (processedButton[i] == 0 || !(processedButton[i] >= 'A' && processedButton[i] <= 'D'))
                 continue;
+            pass.button = processedButton[i];
+            if (alarmThreadCounter == 0)
+            {
+                pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
+                alarmThreadCounter++;
+            }
+            if (backlightThreadCounter == 0)
+            {
+                pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
+                backlightThreadCounter++;
+            }
             decideMainProcess(&state, &alarm, processedButton[i]);
+            if (alarmThreadCounter == 1)
+            {
+                pthread_join(alarmThread, NULL);
+                alarmThreadCounter--;
+            }
+            if (backlightThreadCounter == 1)
+            {
+                pthread_join(backlightThread, NULL);
+                backlightThreadCounter--;
+            }
         }
         buttonInitialize(inputButton, 0, INPUT_BUTTON_SIZE);
         buttonInitialize(processedButton, 0, PROCESSED_BUTTON_SIZE);
@@ -94,12 +132,26 @@ int main(void)
     return 0;
 }
 
-void *alarmThread(void *test) //Alarm controller thread
+void setDefault(StateData *state, AlarmData *alarm)
 {
+    state->mode == TIME_KEEPING_MODE;
+    state->innerMode = DEFAULT;
+    state->timeKeepingUnit = NONE;
+    state->alarmUnit = NONE;
+    //state's time struct initialize
+    alarm->alarmIndicator = OFF;
+    alarm->alarmState = OFF;
+    alarm->hour = NONE;
+    alarm->min = NONE;
+}
+void *alarmThreadFunction(void *_pass) //Alarm controller thread
+{
+    PassingData *pass = (PassingData *)_pass;
 }
 
-void *backlightThread(void *test) //Backlight controller thread
+void *backlightThreadFunction(void *_pass) //Backlight controller thread
 {
+    PassingData *pass = (PassingData *)_pass;
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, char button) //Decide main controller process based on state, button and alarm data
 {
