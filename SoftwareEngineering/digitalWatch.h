@@ -31,11 +31,18 @@
 #define YELLOW "\x1b[33m"
 #define WHITE "\x1b[37m"
 
+//for button input
 #define INPUT_BUTTON_SIZE 100
 #define PROCESSED_BUTTON_SIZE 5
 
+//for thread synchronization
+#define CLEAR 2
 #define UNLOCK 1
 #define LOCK 0
+
+//for gotoxy
+#define BUTTON_INPUT_X 125
+#define BUTTON_INPUT_Y 100
 typedef struct AlarmData
 {
     int alarmIndicator;
@@ -62,8 +69,7 @@ typedef struct PassingData //Data to backlight & alarm controller
     int *backlightThreadBoundaryLine;
     int *alarmThreadBoundaryLine;
     int *mainBoundaryLine;
-    // int *alarmThreadCounter;
-    // int *backlightThreadCounter;
+    int *backlightThreadCounter;
 } PassingData;
 typedef struct ButtonData
 {
