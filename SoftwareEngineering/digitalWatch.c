@@ -55,6 +55,8 @@ typedef struct PassingData //Data to backlight & alarm controller
     char *button;
     struct tm *backlightTime;
     struct tm *alarmTime;
+    // int *alarmThreadCounter;
+    // int *backlightThreadCounter;
 } PassingData;
 typedef struct StateData
 {
@@ -118,17 +120,31 @@ int main(void)
     pthread_t alarmThread;
     pthread_t backlightThread;
     int i;
-    int alarmThreadCounter = 0;
-    int backlightThreadCounter = 0;
+    // int alarmThreadCounter = 0;
+    // int backlightThreadCounter = 0;
     setDefault(&state, &alarm); //state, alarm initialize
     currentTime = localtime(&timer);
     pass.alarm = &alarm;
+    // pass.alarmThreadCounter = &alarmThreadCounter;
+    // pass.backlightThreadCounter = &backlightThreadCounter;
+    // if (alarmThreadCounter == 0 && alarm.alarmState == OFF)
+    // {
+        pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
+        // alarmThreadCounter++;
+    //     pthread_detach(alarmThread);
+    // }
+    // if (backlightThreadCounter == 0 && currentButton == 'D')
+    // {
+        pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
+    //     backlightThreadCounter++;
+    //     pthread_detach(backlightThread);
+    // }
     while (1)
     {
         // system("clear");
-        // gotoxy(50,50);
+        gotoxy(50,50);
         int buttonLength;
-        printf(WHITE);
+        // printf(WHITE);
         printf("Button : ");
         scanf("%s", inputButton);
         buttonProcess(inputButton, processedButton);
@@ -138,35 +154,39 @@ int main(void)
         {
             // if (processedButton[i] == 0 || !(processedButton[i] >= 'A' && processedButton[i] <= 'D'))
             //     continue;
+            // printf("main backlight : %d\n", &backlightThreadCounter);
+            // printf("backlight thread counter : %d\n", backlightThreadCounter);
             currentButton = processedButton[i];
             pass.button = &currentButton;
-            if (alarmThreadCounter == 0 && alarm.alarmState == OFF && currentButton == 'D')
-            {
-                pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
-                alarmThreadCounter++;
-            }
-            if (backlightThreadCounter == 0)
-            {
-                pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
-                backlightThreadCounter++;
-            }
+            // if (alarmThreadCounter == 0 && alarm.alarmState == OFF)
+            // {
+            //     pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
+            //     alarmThreadCounter++;
+            //     pthread_detach(alarmThread);
+            // }
+            // if (backlightThreadCounter == 0 && currentButton == 'D')
+            // {
+            //     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
+            //     backlightThreadCounter++;
+            //     pthread_detach(backlightThread);
+            // }
             decideMainProcess(&state, &alarm, &modifyTimeValue, currentButton);
-            if (alarmThreadCounter == 1)
-            {
-                pthread_join(alarmThread, NULL);
-                alarmThreadCounter--;
-            }
-            if (backlightThreadCounter == 1)
-            {
-                pthread_join(backlightThread, NULL);
-                backlightThreadCounter--;
-            }
+            // if (alarmThreadCounter == 1)
+            // {
+            //     pthread_join(alarmThread, NULL);
+            //     alarmThreadCounter--;
+            // }
+            // if (backlightThreadCounter == 1)
+            // {
+            //     pthread_join(backlightThread, NULL);
+            //     backlightThreadCounter--;
+            // }
         }
         buttonInitialize(inputButton, 0, INPUT_BUTTON_SIZE);
         buttonInitialize(processedButton, 0, PROCESSED_BUTTON_SIZE);
     }
-    // pthread_join(&Alarm, NULL);
-    // pthread_join(&BackLight, NULL);
+    pthread_join(alarmThread, NULL);
+    pthread_join(backlightThread, NULL);
     return 0;
 }
 
@@ -185,14 +205,28 @@ void setDefault(StateData *state, AlarmData *alarm) //
 void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass tm data
 {
     PassingData *pass = (PassingData *)_pass;
+    // (*(pass->alarmThreadCounter))--;
     //need to have tm data
 }
 
 void *backlightThreadFunction(void *_pass) //Backlight controller thread. need to pass tm data
 {
     PassingData *pass = (PassingData *)_pass;
-    printf(YELLOW);
-    //need to have tm data
+    timer_t timer;
+    struct tm *currentTime/* = localtime(&timer)*/;
+    int backlight = OFF;
+    while(1)
+    {
+        timer = time(NULL);
+        currentTime = localtime(&timer);
+        if(pass->button == NULL)
+            continue;
+        if(*(pass->button) == 'D')
+            printf(YELLOW);
+        // Sleep(2000); //tick 2seconds.
+        // printf(WHITE);
+        // (*(pass->backlightThreadCounter))--;
+    }//need to have tm data
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue, char button) //Decide main controller process based on state, button and alarm data
 {
