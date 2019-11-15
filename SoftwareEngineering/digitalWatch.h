@@ -80,7 +80,6 @@ void decideMainProcess(StateData *, AlarmData *, struct tm *, char); //Decide ma
 void mainProcessA(StateData *, AlarmData *, char);
 void mainProcessB(StateData *, AlarmData *, struct tm *, char);
 void mainProcessC(StateData *, AlarmData *, char);
-// void mainProcessD(StateData *, AlarmData *, char);
 void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
 void *alarmThreadFunction(void *);       //Alarm controller thread
 void *backlightThreadFunction(void *);   //Backlight controller thread

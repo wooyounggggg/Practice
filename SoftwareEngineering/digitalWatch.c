@@ -18,7 +18,7 @@ int main(void)
             "SU",
         };
     char inputButton[INPUT_BUTTON_SIZE] = {0};   //User's button input. It will be processed and stored at processed button.
-    char processedButton[PROCESSED_BUTTON_SIZE]; //processed 4(random A~D -> D-C-B-A) button from inputButton.
+    char processedButton[PROCESSED_BUTTON_SIZE] = {0}; //processed 4(random A~D -> D-C-B-A) button from inputButton.
     char currentButton;
     StateData state;
     AlarmData alarm;
@@ -50,6 +50,7 @@ int main(void)
     button.buttonLength = &buttonLength;
     button.buttonThreadBoundaryLine = &buttonThreadBoundaryLine;
     mainBoundaryLine = UNLOCK;
+    buttonThreadBoundaryLine = LOCK;
     pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
     pthread_create(&buttonThread, NULL, &buttonThreadFunction, (void *)&button);
@@ -67,7 +68,7 @@ int main(void)
         mainBoundaryLine = LOCK;
         if (*(button.buttonThreadBoundaryLine) == UNLOCK)
         {
-            for (i = 0; i < *(button.buttonLength); i++)
+            for (i = 0; i < buttonLength; i++)
             {
                 currentButton = processedButton[i];
                 pass.button = &currentButton;
@@ -157,15 +158,18 @@ void *buttonThreadFunction(void *_buttonList)
     while (1)
     {
         // *(buttonList->buttonThreadBoundaryLine) = ON;
-        printf("Button : ");
-        scanf("%s", buttonList->inputButton);
-        buttonProcess(buttonList->inputButton, buttonList->processedButton);
-        *(buttonList->buttonThreadBoundaryLine) = UNLOCK;
+        if(*(buttonList->mainBoundaryLine) == UNLOCK)
+        {    
+            printf("Button : ");
+            scanf("%s", buttonList->inputButton);
+            buttonProcess(buttonList->inputButton, buttonList->processedButton);
+        }
         *(buttonList->buttonLength) = getButtonLength(buttonList->processedButton);
+        *(buttonList->buttonThreadBoundaryLine) = UNLOCK;
         if (*(buttonList->mainBoundaryLine) == UNLOCK)
         {
-            buttonInitialize(buttonList->inputButton, 0, INPUT_BUTTON_SIZE);
             buttonInitialize(buttonList->processedButton, 0, PROCESSED_BUTTON_SIZE);
+            buttonInitialize(buttonList->inputButton, 0, INPUT_BUTTON_SIZE);
             *(buttonList->mainBoundaryLine) = LOCK;
         }
         // printf("Processed button length : %d\n", *(buttonList->buttonLength));
