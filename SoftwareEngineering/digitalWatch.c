@@ -4,96 +4,104 @@
 #include <string.h>
 #include <time.h>
 #include <windows.h>
+#include "digitalWatch.h"
 // #define TRUE 1 == 1
 // #define FALSE 1 != 1
-#define ON 1
-#define OFF 0
-//struct State Data variable mode preset
-#define TIME_KEEPING_MODE 0 // mode == timeKeeping
-#define STOP_WATCH_MODE 1   // mode == stopWatch
-#define ALARM_MODE 2        // mode == alarm
+// #define ON 1
+// #define OFF 0
+// //struct State Data variable mode preset
+// #define TIME_KEEPING_MODE 0 // mode == timeKeeping
+// #define STOP_WATCH_MODE 1   // mode == stopWatch
+// #define ALARM_MODE 2        // mode == alarm
 
-//struct State Data variable innerMode preset
-#define DEFAULT 0            // inner mode == default
-#define TIME_KEEPING_SET 1   // inner mode == timeKeeping->timeKeepingSet
-#define STOP_WATCH_RUN 2     // stopWatch mode == stopWatch->stopWatchRun
-#define STOP_WATCH_LAPTIME 3 // stopWatch mode == stopWatch->laptime
-#define STOP_WATCH_PAUSE 4   // stopWatch mode == stopWatch->pause
-#define ALARM_SET 5
+// //struct State Data variable innerMode preset
+// #define DEFAULT 0            // inner mode == default
+// #define TIME_KEEPING_SET 1   // inner mode == timeKeeping->timeKeepingSet
+// #define STOP_WATCH_RUN 2     // stopWatch mode == stopWatch->stopWatchRun
+// #define STOP_WATCH_LAPTIME 3 // stopWatch mode == stopWatch->laptime
+// #define STOP_WATCH_PAUSE 4   // stopWatch mode == stopWatch->pause
+// #define ALARM_SET 5
 
-//struct State Data timeKeepingUnit preset
-#define NONE -1
-#define TIME_KEEPING_SEC 0
-#define TIME_KEEPING_HOUR 1
-#define TIME_KEEPING_MIN 2
-#define TIME_KEEPING_YEAR 3
-#define TIME_KEEPING_MONTH 4
-#define TIME_KEEPING_DAY 5
+// //struct State Data timeKeepingUnit preset
+// #define NONE -1
+// #define TIME_KEEPING_SEC 0
+// #define TIME_KEEPING_HOUR 1
+// #define TIME_KEEPING_MIN 2
+// #define TIME_KEEPING_YEAR 3
+// #define TIME_KEEPING_MONTH 4
+// #define TIME_KEEPING_DAY 5
 
-//struct Alarm Data alarmUnit preset
-#define NONE -1
-#define ALARM_HOUR 0
-#define ALARM_MIN 1
+// //struct Alarm Data alarmUnit preset
+// #define NONE -1
+// #define ALARM_HOUR 0
+// #define ALARM_MIN 1
 
-//for text color print
-#define YELLOW "\x1b[33m"
-#define WHITE "\x1b[37m"
+// //for text color print
+// #define YELLOW "\x1b[33m"
+// #define WHITE "\x1b[37m"
 
-#define INPUT_BUTTON_SIZE 100
-#define PROCESSED_BUTTON_SIZE 5
-typedef struct AlarmData
-{
-    int alarmIndicator;
-    int alarmState;
-    int hour;
-    int min;
-} AlarmData;
+// #define INPUT_BUTTON_SIZE 100
+// #define PROCESSED_BUTTON_SIZE 5
+// typedef struct AlarmData
+// {
+//     int alarmIndicator;
+//     int alarmState;
+//     int hour;
+//     int min;
+// } AlarmData;
 
-typedef struct PassingData //Data to backlight & alarm controller
-{
-    AlarmData *alarm;
-    char *button;
-    struct tm *backlightTime;
-    struct tm *alarmTime;
-    // int *alarmThreadCounter;
-    // int *backlightThreadCounter;
-} PassingData;
-typedef struct StateData
-{
-    char mode;
-    char innerMode;
-    char timeKeepingUnit;
-    char alarmUnit;
-    //need time struct for alarm, backlight
-} StateData;
+// typedef struct PassingData //Data to backlight & alarm controller
+// {
+//     AlarmData *alarm;
+//     char *button;
+//     struct tm *backlightTime;
+//     struct tm *alarmTime;
+//     // int *alarmThreadCounter;
+//     // int *backlightThreadCounter;
+// } PassingData;
+// typedef struct StateData
+// {
+//     char mode;
+//     char innerMode;
+//     char timeKeepingUnit;
+//     char alarmUnit;
+//     //need time struct for alarm, backlight
+// } StateData;
 
-void setDefault(StateData *, AlarmData *);
-void decideMainProcess(StateData *, AlarmData *, struct tm *, char); //Decide main controller process based on state, button and alarm data
-void mainProcessA(StateData *, AlarmData *, char);
-void mainProcessB(StateData *, AlarmData *, struct tm *, char);
-void mainProcessC(StateData *, AlarmData *, char);
-// void mainProcessD(StateData *, AlarmData *, char);
-void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
-void *alarmThreadFunction(void *);       //Alarm controller thread
-void *backlightThreadFunction(void *);   //Backlight controller thread
-void buttonProcess(char *, char *);      //Process simultaneous input processing
-void timeKeepingMode(StateData *);       // Enable timeKeepingMode
-void timeKeepingSet(StateData *);        // Enable timeKeepingSet
-void timeKeepingUnitChange(StateData *); // Trigger timeKeeping unit change
-void stopWatchMode(StateData *);         // Enable stopWatchMode
-void stopWatchLaptime(StateData *);
-void stopWatchRun(StateData *);
-void stopWatchPause(StateData *);
-void alarmMode(StateData *); // Enable alarmMode
-void alarmSetMode(StateData *);
-void alarmIndicator(AlarmData *);
-void addValue(StateData *, AlarmData *, struct tm *);
-void showWatch(StateData *); // show watch based on StateData
-void selectionSort(char *);
-int getMaxIdx(char *, int);
-int getButtonLength(char *);
-void gotoxy(int, int);
-void textcolor(int, int);
+// typedef struct ButtonData
+// {
+//     char *inputButton;
+//     char *processedButton;
+//     char currentButton;
+// } ButtonData;
+// void setDefault(StateData *, AlarmData *);
+// void decideMainProcess(StateData *, AlarmData *, struct tm *, char); //Decide main controller process based on state, button and alarm data
+// void mainProcessA(StateData *, AlarmData *, char);
+// void mainProcessB(StateData *, AlarmData *, struct tm *, char);
+// void mainProcessC(StateData *, AlarmData *, char);
+// // void mainProcessD(StateData *, AlarmData *, char);
+// void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
+// void *alarmThreadFunction(void *);       //Alarm controller thread
+// void *backlightThreadFunction(void *);   //Backlight controller thread
+// int timeDifference(timer_t, timer_t, int);
+// void buttonProcess(char *, char *);      //Process simultaneous input processing
+// void timeKeepingMode(StateData *);       // Enable timeKeepingMode
+// void timeKeepingSet(StateData *);        // Enable timeKeepingSet
+// void timeKeepingUnitChange(StateData *); // Trigger timeKeeping unit change
+// void stopWatchMode(StateData *);         // Enable stopWatchMode
+// void stopWatchLaptime(StateData *);
+// void stopWatchRun(StateData *);
+// void stopWatchPause(StateData *);
+// void alarmMode(StateData *); // Enable alarmMode
+// void alarmSetMode(StateData *);
+// void alarmIndicator(AlarmData *);
+// void addValue(StateData *, AlarmData *, struct tm *);
+// void showWatch(StateData *); // show watch based on StateData
+// void selectionSort(char *);
+// int getMaxIdx(char *, int);
+// int getButtonLength(char *);
+// void gotoxy(int, int);
+// void textcolor(int, int);
 int main(void)
 {
     char *weekOfDays[7] =
@@ -112,6 +120,7 @@ int main(void)
     StateData state;
     AlarmData alarm;
     PassingData pass;
+    ButtonData button;
     timer_t timer;
     struct tm *currentTime;
     struct tm *backlightTime;
@@ -119,71 +128,47 @@ int main(void)
     struct tm modifyTimeValue;
     pthread_t alarmThread;
     pthread_t backlightThread;
+    pthread_t buttonThread;
     int i;
-    // int alarmThreadCounter = 0;
-    // int backlightThreadCounter = 0;
+    int buttonLength;
+    int backlightThreadBoundaryLine;
+    int alarmThreadBoundaryLine;
+    int buttonThreadBoundaryLine;
     setDefault(&state, &alarm); //state, alarm initialize
     currentTime = localtime(&timer);
     pass.alarm = &alarm;
-    // pass.alarmThreadCounter = &alarmThreadCounter;
-    // pass.backlightThreadCounter = &backlightThreadCounter;
-    // if (alarmThreadCounter == 0 && alarm.alarmState == OFF)
-    // {
+    pass.backlightThreadBoundaryLine = &backlightThreadBoundaryLine;
+    pass.alarmThreadBoundaryLine = &alarmThreadBoundaryLine;
+    
+    button.inputButton = inputButton;
+    button.processedButton = processedButton;
+    button.buttonLength = &buttonLength;
+    button.buttonThreadBoundaryLine = &buttonThreadBoundaryLine;
     pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
-    // alarmThreadCounter++;
-    //     pthread_detach(alarmThread);
-    // }
-    // if (backlightThreadCounter == 0 && currentButton == 'D')
-    // {
     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
-    //     backlightThreadCounter++;
-    //     pthread_detach(backlightThread);
-    // }
+    pthread_create(&buttonThread, NULL, &buttonThreadFunction, (void *)&button);
     while (1)
     {
         // system("clear");
-        gotoxy(50, 50);
-        int buttonLength;
+        // gotoxy(50, 50);
+        // int buttonLength;
         // printf(WHITE);
-        printf("Button : ");
-        scanf("%s", inputButton);
-        buttonProcess(inputButton, processedButton);
-        buttonLength = getButtonLength(processedButton);
-        printf("Processed button length : %d\n", buttonLength);
-        for (i = 0; i < buttonLength; i++)
+        // printf("Button : ");
+        // scanf("%s", inputButton);
+        // buttonProcess(inputButton, processedButton);
+        // buttonLength = getButtonLength(processedButton);
+        // printf("Processed button length : %d\n", buttonLength);
+        for (i = 0; i < *(button.buttonLength); i++)
         {
-            // if (processedButton[i] == 0 || !(processedButton[i] >= 'A' && processedButton[i] <= 'D'))
-            //     continue;
-            // printf("main backlight : %d\n", &backlightThreadCounter);
-            // printf("backlight thread counter : %d\n", backlightThreadCounter);
             currentButton = processedButton[i];
             pass.button = &currentButton;
-            // if (alarmThreadCounter == 0 && alarm.alarmState == OFF)
-            // {
-            //     pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
-            //     alarmThreadCounter++;
-            //     pthread_detach(alarmThread);
-            // }
-            // if (backlightThreadCounter == 0 && currentButton == 'D')
-            // {
-            //     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
-            //     backlightThreadCounter++;
-            //     pthread_detach(backlightThread);
-            // }
             decideMainProcess(&state, &alarm, &modifyTimeValue, currentButton);
-            // if (alarmThreadCounter == 1)
-            // {
-            //     pthread_join(alarmThread, NULL);
-            //     alarmThreadCounter--;
-            // }
-            // if (backlightThreadCounter == 1)
-            // {
-            //     pthread_join(backlightThread, NULL);
-            //     backlightThreadCounter--;
-            // }
         }
-        buttonInitialize(inputButton, 0, INPUT_BUTTON_SIZE);
-        buttonInitialize(processedButton, 0, PROCESSED_BUTTON_SIZE);
+        if(*(button.buttonThreadBoundaryLine) == OFF)
+         {   
+             buttonInitialize(inputButton, 0, INPUT_BUTTON_SIZE);
+            buttonInitialize(processedButton, 0, PROCESSED_BUTTON_SIZE);
+        }
     }
     pthread_join(alarmThread, NULL);
     pthread_join(backlightThread, NULL);
@@ -212,19 +197,38 @@ void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass t
 void *backlightThreadFunction(void *_pass) //Backlight controller thread. need to pass tm data
 {
     PassingData *pass = (PassingData *)_pass;
-    timer_t timer;
-    struct tm *currentTime /* = localtime(&timer)*/;
+    timer_t timerBefore;
+    timer_t timerAfter;
+    struct tm *currentTime /* = localtime(&timerBefore)*/;
     int backlight = OFF;
     while (1)
     {
-        if (pass->button == NULL)
-            continue;
-        else if (*(pass->button) == 'D' && pass->alarm->alarmState == OFF)
+        if(backlight == OFF)
         {
-            backlight = ON;
-            timer = time(NULL);
-            currentTime = localtime(&timer);
-            printf(YELLOW);
+            if(pass->button == NULL || pass->alarm->alarmState == ON)
+                continue;
+            else if(*(pass->button) == 'D')
+            {
+                backlight = ON;
+                timerBefore = time(NULL);
+                currentTime = localtime(&timerBefore);
+                printf(YELLOW);
+                // printf("%c\n", *(pass->button));
+                if(*(pass->button) == 'D')
+                    *(pass->button) = 0;
+            }
+        }
+        else if(backlight == ON)
+        {
+            if(timeDifference(timerBefore, timerAfter, 2))
+            {
+                printf(WHITE);
+                backlight = OFF;
+            }
+            // printf("%c\n", *(pass->button));
+            if(*(pass->button) == 'D')
+                *(pass->button) = 0;
+            // printf("%c\n",*(pass->button));
         }
 
         // Sleep(2000); //tick 2seconds.
@@ -233,8 +237,25 @@ void *backlightThreadFunction(void *_pass) //Backlight controller thread. need t
     } //need to have tm data
 }
 
+void *buttonThreadFunction(void *_buttonList)
+{
+    ButtonData *buttonList = _buttonList;
+    while(1)
+    {
+        *(buttonList->buttonThreadBoundaryLine) = OFF;
+        printf("Button : ");
+        scanf("%s", buttonList->inputButton);
+        *(buttonList->buttonThreadBoundaryLine) = ON;
+        buttonProcess(buttonList->inputButton, buttonList->processedButton);
+        *(buttonList->buttonLength) = getButtonLength(buttonList->processedButton);
+        // printf("Processed button length : %d\n", *(buttonList->buttonLength));
+    }
+}
 int timeDifference(timer_t before, timer_t after, int sec)
 {
+    after = time(NULL);
+    // printf("after - before : %d\n", after-before);
+    Sleep(1000);
     return after - before >= sec;
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue, char button) //Decide main controller process based on state, button and alarm data
@@ -255,7 +276,7 @@ void decideMainProcess(StateData *state, AlarmData *alarm, struct tm *modifyTime
     case 'D':
         break;
     default:
-        printf("exception\n");
+        // printf("exception\n");
         break;
     }
     // gotoxy(40,40);
