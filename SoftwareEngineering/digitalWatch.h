@@ -34,6 +34,8 @@
 #define INPUT_BUTTON_SIZE 100
 #define PROCESSED_BUTTON_SIZE 5
 
+#define UNLOCK 1
+#define LOCK 0
 typedef struct AlarmData
 {
     int alarmIndicator;
@@ -42,17 +44,6 @@ typedef struct AlarmData
     int min;
 } AlarmData;
 
-typedef struct PassingData //Data to backlight & alarm controller
-{
-    AlarmData *alarm;
-    char *button;
-    struct tm *backlightTime;
-    struct tm *alarmTime;
-    int *backlightThreadBoundaryLine;
-    int *alarmThreadBoundaryLine;
-    // int *alarmThreadCounter;
-    // int *backlightThreadCounter;
-} PassingData;
 typedef struct StateData
 {
     char mode;
@@ -62,12 +53,25 @@ typedef struct StateData
     //need time struct for alarm, backlight
 } StateData;
 
+typedef struct PassingData //Data to backlight & alarm controller
+{
+    AlarmData *alarm;
+    char *button;
+    struct tm *backlightTime;
+    struct tm *alarmTime;
+    int *backlightThreadBoundaryLine;
+    int *alarmThreadBoundaryLine;
+    int *mainBoundaryLine;
+    // int *alarmThreadCounter;
+    // int *backlightThreadCounter;
+} PassingData;
 typedef struct ButtonData
 {
     char *inputButton;
     char *processedButton;
     int *buttonLength;
     int *buttonThreadBoundaryLine;
+    int *mainBoundaryLine;
     // char *currentButton;
 } ButtonData;
 
@@ -100,3 +104,5 @@ int getMaxIdx(char *, int);
 int getButtonLength(char *);
 void gotoxy(int, int);
 void textcolor(int, int);
+
+// pthread_mutex_t mutex_lock;

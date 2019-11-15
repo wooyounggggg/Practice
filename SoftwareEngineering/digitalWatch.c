@@ -5,103 +5,6 @@
 #include <time.h>
 #include <windows.h>
 #include "digitalWatch.h"
-// #define TRUE 1 == 1
-// #define FALSE 1 != 1
-// #define ON 1
-// #define OFF 0
-// //struct State Data variable mode preset
-// #define TIME_KEEPING_MODE 0 // mode == timeKeeping
-// #define STOP_WATCH_MODE 1   // mode == stopWatch
-// #define ALARM_MODE 2        // mode == alarm
-
-// //struct State Data variable innerMode preset
-// #define DEFAULT 0            // inner mode == default
-// #define TIME_KEEPING_SET 1   // inner mode == timeKeeping->timeKeepingSet
-// #define STOP_WATCH_RUN 2     // stopWatch mode == stopWatch->stopWatchRun
-// #define STOP_WATCH_LAPTIME 3 // stopWatch mode == stopWatch->laptime
-// #define STOP_WATCH_PAUSE 4   // stopWatch mode == stopWatch->pause
-// #define ALARM_SET 5
-
-// //struct State Data timeKeepingUnit preset
-// #define NONE -1
-// #define TIME_KEEPING_SEC 0
-// #define TIME_KEEPING_HOUR 1
-// #define TIME_KEEPING_MIN 2
-// #define TIME_KEEPING_YEAR 3
-// #define TIME_KEEPING_MONTH 4
-// #define TIME_KEEPING_DAY 5
-
-// //struct Alarm Data alarmUnit preset
-// #define NONE -1
-// #define ALARM_HOUR 0
-// #define ALARM_MIN 1
-
-// //for text color print
-// #define YELLOW "\x1b[33m"
-// #define WHITE "\x1b[37m"
-
-// #define INPUT_BUTTON_SIZE 100
-// #define PROCESSED_BUTTON_SIZE 5
-// typedef struct AlarmData
-// {
-//     int alarmIndicator;
-//     int alarmState;
-//     int hour;
-//     int min;
-// } AlarmData;
-
-// typedef struct PassingData //Data to backlight & alarm controller
-// {
-//     AlarmData *alarm;
-//     char *button;
-//     struct tm *backlightTime;
-//     struct tm *alarmTime;
-//     // int *alarmThreadCounter;
-//     // int *backlightThreadCounter;
-// } PassingData;
-// typedef struct StateData
-// {
-//     char mode;
-//     char innerMode;
-//     char timeKeepingUnit;
-//     char alarmUnit;
-//     //need time struct for alarm, backlight
-// } StateData;
-
-// typedef struct ButtonData
-// {
-//     char *inputButton;
-//     char *processedButton;
-//     char currentButton;
-// } ButtonData;
-// void setDefault(StateData *, AlarmData *);
-// void decideMainProcess(StateData *, AlarmData *, struct tm *, char); //Decide main controller process based on state, button and alarm data
-// void mainProcessA(StateData *, AlarmData *, char);
-// void mainProcessB(StateData *, AlarmData *, struct tm *, char);
-// void mainProcessC(StateData *, AlarmData *, char);
-// // void mainProcessD(StateData *, AlarmData *, char);
-// void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
-// void *alarmThreadFunction(void *);       //Alarm controller thread
-// void *backlightThreadFunction(void *);   //Backlight controller thread
-// int timeDifference(timer_t, timer_t, int);
-// void buttonProcess(char *, char *);      //Process simultaneous input processing
-// void timeKeepingMode(StateData *);       // Enable timeKeepingMode
-// void timeKeepingSet(StateData *);        // Enable timeKeepingSet
-// void timeKeepingUnitChange(StateData *); // Trigger timeKeeping unit change
-// void stopWatchMode(StateData *);         // Enable stopWatchMode
-// void stopWatchLaptime(StateData *);
-// void stopWatchRun(StateData *);
-// void stopWatchPause(StateData *);
-// void alarmMode(StateData *); // Enable alarmMode
-// void alarmSetMode(StateData *);
-// void alarmIndicator(AlarmData *);
-// void addValue(StateData *, AlarmData *, struct tm *);
-// void showWatch(StateData *); // show watch based on StateData
-// void selectionSort(char *);
-// int getMaxIdx(char *, int);
-// int getButtonLength(char *);
-// void gotoxy(int, int);
-// void textcolor(int, int);
 int main(void)
 {
     char *weekOfDays[7] =
@@ -134,16 +37,19 @@ int main(void)
     int backlightThreadBoundaryLine;
     int alarmThreadBoundaryLine;
     int buttonThreadBoundaryLine;
+    int mainBoundaryLine;
     setDefault(&state, &alarm); //state, alarm initialize
     currentTime = localtime(&timer);
     pass.alarm = &alarm;
     pass.backlightThreadBoundaryLine = &backlightThreadBoundaryLine;
     pass.alarmThreadBoundaryLine = &alarmThreadBoundaryLine;
-    
+    pass.mainBoundaryLine = &mainBoundaryLine;
+
     button.inputButton = inputButton;
     button.processedButton = processedButton;
     button.buttonLength = &buttonLength;
     button.buttonThreadBoundaryLine = &buttonThreadBoundaryLine;
+    mainBoundaryLine = UNLOCK;
     pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
     pthread_create(&buttonThread, NULL, &buttonThreadFunction, (void *)&button);
@@ -158,20 +64,28 @@ int main(void)
         // buttonProcess(inputButton, processedButton);
         // buttonLength = getButtonLength(processedButton);
         // printf("Processed button length : %d\n", buttonLength);
-        for (i = 0; i < *(button.buttonLength); i++)
+        mainBoundaryLine = LOCK;
+        if (*(button.buttonThreadBoundaryLine) == UNLOCK)
         {
-            currentButton = processedButton[i];
-            pass.button = &currentButton;
-            decideMainProcess(&state, &alarm, &modifyTimeValue, currentButton);
+            for (i = 0; i < *(button.buttonLength); i++)
+            {
+                currentButton = processedButton[i];
+                pass.button = &currentButton;
+                decideMainProcess(&state, &alarm, &modifyTimeValue, currentButton);
+            }
+            *(button.buttonThreadBoundaryLine) = LOCK;
         }
-        if(*(button.buttonThreadBoundaryLine) == OFF)
-         {   
-             buttonInitialize(inputButton, 0, INPUT_BUTTON_SIZE);
-            buttonInitialize(processedButton, 0, PROCESSED_BUTTON_SIZE);
-        }
+        // printf("test\n");
+        mainBoundaryLine = UNLOCK;
+        // if (*(button.buttonThreadBoundaryLine) == OFF)
+        // {
+        //     buttonInitialize(inputButton, 0, INPUT_BUTTON_SIZE);
+        //     buttonInitialize(processedButton, 0, PROCESSED_BUTTON_SIZE);
+        // }
     }
     pthread_join(alarmThread, NULL);
     pthread_join(backlightThread, NULL);
+    pthread_join(buttonThread, NULL);
     return 0;
 }
 
@@ -203,30 +117,30 @@ void *backlightThreadFunction(void *_pass) //Backlight controller thread. need t
     int backlight = OFF;
     while (1)
     {
-        if(backlight == OFF)
+        if (backlight == OFF)
         {
-            if(pass->button == NULL || pass->alarm->alarmState == ON)
+            if (pass->button == NULL || pass->alarm->alarmState == ON)
                 continue;
-            else if(*(pass->button) == 'D')
+            else if (*(pass->button) == 'D')
             {
                 backlight = ON;
                 timerBefore = time(NULL);
                 currentTime = localtime(&timerBefore);
                 printf(YELLOW);
                 // printf("%c\n", *(pass->button));
-                if(*(pass->button) == 'D')
+                if (*(pass->button) == 'D')
                     *(pass->button) = 0;
             }
         }
-        else if(backlight == ON)
+        else if (backlight == ON)
         {
-            if(timeDifference(timerBefore, timerAfter, 2))
+            if (timeDifference(timerBefore, timerAfter, 2))
             {
                 printf(WHITE);
                 backlight = OFF;
             }
             // printf("%c\n", *(pass->button));
-            if(*(pass->button) == 'D')
+            if (*(pass->button) == 'D')
                 *(pass->button) = 0;
             // printf("%c\n",*(pass->button));
         }
@@ -240,14 +154,20 @@ void *backlightThreadFunction(void *_pass) //Backlight controller thread. need t
 void *buttonThreadFunction(void *_buttonList)
 {
     ButtonData *buttonList = _buttonList;
-    while(1)
+    while (1)
     {
-        *(buttonList->buttonThreadBoundaryLine) = OFF;
+        // *(buttonList->buttonThreadBoundaryLine) = ON;
         printf("Button : ");
         scanf("%s", buttonList->inputButton);
-        *(buttonList->buttonThreadBoundaryLine) = ON;
         buttonProcess(buttonList->inputButton, buttonList->processedButton);
+        *(buttonList->buttonThreadBoundaryLine) = UNLOCK;
         *(buttonList->buttonLength) = getButtonLength(buttonList->processedButton);
+        if (*(buttonList->mainBoundaryLine) == UNLOCK)
+        {
+            buttonInitialize(buttonList->inputButton, 0, INPUT_BUTTON_SIZE);
+            buttonInitialize(buttonList->processedButton, 0, PROCESSED_BUTTON_SIZE);
+            *(buttonList->mainBoundaryLine) = LOCK;
+        }
         // printf("Processed button length : %d\n", *(buttonList->buttonLength));
     }
 }
