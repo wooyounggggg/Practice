@@ -129,20 +129,20 @@ int main(void)
     // pass.backlightThreadCounter = &backlightThreadCounter;
     // if (alarmThreadCounter == 0 && alarm.alarmState == OFF)
     // {
-        pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
-        // alarmThreadCounter++;
+    pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
+    // alarmThreadCounter++;
     //     pthread_detach(alarmThread);
     // }
     // if (backlightThreadCounter == 0 && currentButton == 'D')
     // {
-        pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
+    pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
     //     backlightThreadCounter++;
     //     pthread_detach(backlightThread);
     // }
     while (1)
     {
         // system("clear");
-        gotoxy(50,50);
+        gotoxy(50, 50);
         int buttonLength;
         // printf(WHITE);
         printf("Button : ");
@@ -213,20 +213,29 @@ void *backlightThreadFunction(void *_pass) //Backlight controller thread. need t
 {
     PassingData *pass = (PassingData *)_pass;
     timer_t timer;
-    struct tm *currentTime/* = localtime(&timer)*/;
+    struct tm *currentTime /* = localtime(&timer)*/;
     int backlight = OFF;
-    while(1)
+    while (1)
     {
-        timer = time(NULL);
-        currentTime = localtime(&timer);
-        if(pass->button == NULL)
+        if (pass->button == NULL)
             continue;
-        if(*(pass->button) == 'D')
+        else if (*(pass->button) == 'D' && pass->alarm->alarmState == OFF)
+        {
+            backlight = ON;
+            timer = time(NULL);
+            currentTime = localtime(&timer);
             printf(YELLOW);
+        }
+
         // Sleep(2000); //tick 2seconds.
         // printf(WHITE);
         // (*(pass->backlightThreadCounter))--;
-    }//need to have tm data
+    } //need to have tm data
+}
+
+int timeDifference(timer_t before, timer_t after, int sec)
+{
+    return after - before >= sec;
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue, char button) //Decide main controller process based on state, button and alarm data
 {
