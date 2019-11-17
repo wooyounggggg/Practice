@@ -42,7 +42,17 @@
 
 //for gotoxy
 #define BUTTON_INPUT_X 125
-#define BUTTON_INPUT_Y 100
+#define BUTTON_INPUT_Y 50
+typedef struct TimeSet
+{
+    int year;
+    int month;
+    int day;
+    int hour;
+    int min;
+    int sec;
+    int msec;
+} TimeSet;
 typedef struct AlarmData
 {
     int alarmIndicator;
@@ -57,7 +67,9 @@ typedef struct StateData
     char innerMode;
     char timeKeepingUnit;
     char alarmUnit;
-    //need time struct for alarm, backlight
+    TimeSet currentTime;
+    TimeSet stopWatch;
+    TimeSet lapTime;
 } StateData;
 
 typedef struct PassingData //Data to backlight & alarm controller
@@ -82,15 +94,14 @@ typedef struct ButtonData
 } ButtonData;
 
 void setDefault(StateData *, AlarmData *);
-void decideMainProcess(StateData *, AlarmData *, struct tm *, char); //Decide main controller process based on state, button and alarm data
+void decideMainProcess(StateData *, AlarmData *, char); //Decide main controller process based on state, button and alarm data
 void mainProcessA(StateData *, AlarmData *, char);
-void mainProcessB(StateData *, AlarmData *, struct tm *, char);
+void mainProcessB(StateData *, AlarmData *, char);
 void mainProcessC(StateData *, AlarmData *, char);
 void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
 void *alarmThreadFunction(void *);       //Alarm controller thread
 void *backlightThreadFunction(void *);   //Backlight controller thread
 void *buttonThreadFunction(void *);
-int timeDifference(timer_t, timer_t, int);
 void buttonProcess(char *, char *);      //Process simultaneous input processing
 void timeKeepingMode(StateData *);       // Enable timeKeepingMode
 void timeKeepingSet(StateData *);        // Enable timeKeepingSet
@@ -102,7 +113,7 @@ void stopWatchPause(StateData *);
 void alarmMode(StateData *); // Enable alarmMode
 void alarmSetMode(StateData *);
 void alarmIndicator(AlarmData *);
-void addValue(StateData *, AlarmData *, struct tm *);
+void addValue(StateData *, AlarmData *);
 void showWatch(StateData *); // show watch based on StateData
 void selectionSort(char *);
 int getMaxIdx(char *, int);

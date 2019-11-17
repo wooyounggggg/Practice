@@ -70,7 +70,7 @@ int main(void)
                 currentButton = processedButton[i];
                 pass.button = &currentButton;
                 /**/
-                if (currentButton == 'D' && backlightThreadCounter == 0)
+                if (currentButton == 'D')
                 {
                     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
                     pthread_detach(backlightThread);
@@ -81,7 +81,7 @@ int main(void)
                     printf("counter = %d\n", backlightThreadCounter);
                 }
                 /**/
-                decideMainProcess(&state, &alarm, &modifyTimeValue, currentButton);
+                decideMainProcess(&state, &alarm, currentButton);
             }
             mainBoundaryLine = CLEAR;
             *(button.buttonThreadBoundaryLine) = LOCK;
@@ -125,46 +125,12 @@ void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass t
 void *backlightThreadFunction(void *_pass) //Backlight controller thread. need to pass tm data
 {
     PassingData *pass = (PassingData *)_pass;
-    // system("clear");
     printf(YELLOW);
-    // timer_t timerBefore;
-    // timer_t timerAfter;
-    // struct tm *currentTime /* = localtime(&timerBefore)*/;
-    // int backlight = OFF;
-    // while (1)
-    // {
-    //     if (backlight == OFF)
-    //     {
-    //         if (pass->button == NULL || pass->alarm->alarmState == ON)
-    //             continue;
-    //         else if (*(pass->button) == 'D')
-    //         {
-    //             backlight = ON;
-    //             timerBefore = time(NULL);
-    //             currentTime = localtime(&timerBefore);
-    //             printf(YELLOW);
-    //             // printf("%c\n", *(pass->button));
-    //             if (*(pass->button) == 'D')
-    //                 *(pass->button) = 0;
-    //         }
-    //     }
-    //     else if (backlight == ON)
-    //     {
-    //         if (timeDifference(timerBefore, timerAfter, 2))
-    //         {
-    //             printf(WHITE);
-    //             backlight = OFF;
-    //         }
-    //         // printf("%c\n", *(pass->button));
-    //         if (*(pass->button) == 'D')
-    //             *(pass->button) = 0;
-    //         // printf("%c\n",*(pass->button));
-    //     }
-
+    *(pass->backlightThreadCounter) = *(pass->backlightThreadCounter) + 1;
     Sleep(2000); //tick 2seconds.
-    printf(WHITE);
-    *(pass->backlightThreadCounter) = 0;
-    // } //need to have tm data
+    *(pass->backlightThreadCounter) = *(pass->backlightThreadCounter) - 1;
+    if (*(pass->backlightThreadCounter) == 0)
+        printf(WHITE);
 }
 
 void *buttonThreadFunction(void *_buttonList)
@@ -175,6 +141,8 @@ void *buttonThreadFunction(void *_buttonList)
     {
         if (*(buttonList->mainBoundaryLine) == UNLOCK && buttonProcessed == 0)
         {
+            gotoxy(BUTTON_INPUT_X + 9, BUTTON_INPUT_Y);
+            printf("            ");
             gotoxy(BUTTON_INPUT_X, BUTTON_INPUT_Y);
             printf("Button : ");
             scanf("%s", buttonList->inputButton);
@@ -187,22 +155,14 @@ void *buttonThreadFunction(void *_buttonList)
         else if (*(buttonList->mainBoundaryLine) == CLEAR && *(buttonList->buttonThreadBoundaryLine) != CLEAR)
         {
             buttonInitialize(buttonList->processedButton, 0, PROCESSED_BUTTON_SIZE);
-            // buttonInitialize(buttonList->inputButton, 0, INPUT_BUTTON_SIZE);
-            // if (*(buttonList->buttonThreadBoundaryLine) != CLEAR)
+
             *(buttonList->mainBoundaryLine) = LOCK;
             *(buttonList->buttonThreadBoundaryLine) = CLEAR;
             buttonProcessed = 0;
         }
     }
 }
-int timeDifference(timer_t before, timer_t after, int sec)
-{
-    after = time(NULL);
-    // printf("after - before : %d\n", after-before);
-    // Sleep(1000);
-    return after - before >= sec;
-}
-void decideMainProcess(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue, char button) //Decide main controller process based on state, button and alarm data
+void decideMainProcess(StateData *state, AlarmData *alarm, char button) //Decide main controller process based on state, button and alarm data
 {
     if (alarm->alarmState == ON)
         return;
@@ -212,7 +172,7 @@ void decideMainProcess(StateData *state, AlarmData *alarm, struct tm *modifyTime
         mainProcessA(state, alarm, button);
         break;
     case 'B':
-        mainProcessB(state, alarm, modifyTimeValue, button);
+        mainProcessB(state, alarm, button);
         break;
     case 'C':
         mainProcessC(state, alarm, button);
@@ -250,18 +210,16 @@ void mainProcessA(StateData *state, AlarmData *alarm, char button) // main proce
         else if (state->innerMode == ALARM_SET)
             alarmMode(state);
     }
-    else
-        printf("exception : %d\n", state->mode);
     printf("mode : %d, inner mode : %d indicator : %d\n", state->mode, state->innerMode, alarm->alarmIndicator);
     printf("\n");
 }
-void mainProcessB(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue, char button) // main process for button 'B'
+void mainProcessB(StateData *state, AlarmData *alarm, char button) // main process for button 'B'
 {
     printf("Process B\n");
     if (state->mode == TIME_KEEPING_MODE)
     {
         if (state->innerMode == TIME_KEEPING_SET && state->timeKeepingUnit != NONE)
-            addValue(state, alarm, modifyTimeValue);
+            addValue(state, alarm);
     }
     else if (state->mode == STOP_WATCH_MODE)
     {
@@ -277,12 +235,10 @@ void mainProcessB(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue
     else if (state->mode == ALARM_MODE)
     {
         if (state->innerMode == ALARM_SET && state->alarmUnit != NONE)
-            addValue(state, alarm, modifyTimeValue);
+            addValue(state, alarm);
         else if (state->innerMode == DEFAULT)
             alarmIndicator(alarm);
     }
-    else
-        printf("exception : %d\n", state->mode);
     printf("mode : %d, inner mode : %d indicator : %d\n", state->mode, state->innerMode, alarm->alarmIndicator);
     printf("\n");
 }
@@ -292,35 +248,13 @@ void mainProcessC(StateData *state, AlarmData *alarm, char button) // main proce
     if (state->innerMode == DEFAULT) //mode change
         state->mode = (state->mode + 1) % 3;
     else if (state->mode == TIME_KEEPING_MODE)
-        //    if(state->innerMode == TIME_KEEPING_SET) //time keeping unit change
         state->timeKeepingUnit = (state->timeKeepingUnit + 1) % 6;
 
     else if (state->mode == ALARM_MODE)
-        // if(state->innerMode == ALARM_SET)
         state->alarmUnit = (state->alarmUnit + 1) % 2;
-    else
-        printf("exception : %d\n", state->mode);
-
     printf("mode : %d, inner mode : %d indicator : %d\n", state->mode, state->innerMode, alarm->alarmIndicator);
     printf("\n");
 }
-/* nothing in main for button 'D'*/
-// void mainProcessD(StateData *state, AlarmData *alarm, char button) // main process for button 'D'
-// {
-//     printf("Process D\n");
-//     if (state->mode == TIME_KEEPING_MODE)
-//     {
-//     }
-//     else if (state->mode == STOP_WATCH_MODE)
-//     {
-//     }
-//     else if (state->mode == ALARM_MODE)
-//     {
-//     }
-//     else
-//         printf("exception : %d\n", state->mode);
-//     printf("\n");
-// }
 void buttonInitialize(char *button, int begin, int size) //Initialize button in range begin ~ MAX
 {
     int i;
@@ -405,28 +339,32 @@ void alarmIndicator(AlarmData *alarm)
     alarm->alarmIndicator = !(alarm->alarmIndicator);
 }
 
-void addValue(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue)
+void addValue(StateData *state, AlarmData *alarm)
 {
+    int dayOfMonth = 30;
     if (state->mode == TIME_KEEPING_MODE)
         switch (state->timeKeepingUnit)
         {
         case TIME_KEEPING_SEC:
-            modifyTimeValue->tm_sec = modifyTimeValue->tm_sec + 1;
+            state->currentTime.sec = (state->currentTime.sec + 1) % 60;
             break;
         case TIME_KEEPING_HOUR:
-            modifyTimeValue->tm_hour = modifyTimeValue->tm_hour + 1;
+            state->currentTime.hour = (state->currentTime.hour + 1) % 24;
             break;
         case TIME_KEEPING_MIN:
-            modifyTimeValue->tm_min = modifyTimeValue->tm_min + 1;
+            state->currentTime.min = (state->currentTime.min + 1) % 60;
             break;
         case TIME_KEEPING_YEAR:
-            modifyTimeValue->tm_year = modifyTimeValue->tm_year + 1;
+            state->currentTime.year = state->currentTime.year + 1;
             break;
         case TIME_KEEPING_MONTH:
-            modifyTimeValue->tm_mon = modifyTimeValue->tm_mon + 1;
+            state->currentTime.month = (state->currentTime.month + 1) % 12 + 1;
             break;
         case TIME_KEEPING_DAY:
-            modifyTimeValue->tm_mday = modifyTimeValue->tm_mday + 1;
+            if ((state->currentTime.month <= 7 && state->currentTime.month % 2) ||
+                (state->currentTime.month >= 8 && !(state->currentTime.month % 2))) // 31 or 31
+                dayOfMonth = 31;
+            state->currentTime.day = (state->currentTime.day + 1) % dayOfMonth + 1;
             break;
         default:
             break;
@@ -442,10 +380,6 @@ void addValue(StateData *state, AlarmData *alarm, struct tm *modifyTimeValue)
         default:
             break;
         }
-}
-
-void setCurrentTime()
-{
 }
 void showWatch(StateData *state) // show watch based on StateData
 {
