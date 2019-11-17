@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
@@ -29,7 +30,6 @@
 #define TIME_KEEPING_DAY 5
 
 //struct Alarm Data alarmUnit preset
-#define NONE -1
 #define ALARM_HOUR 0
 #define ALARM_MIN 1
 
@@ -53,6 +53,8 @@
 #define TIME_LINE_Y BUTTON_INPUT_Y - 5
 #define DATE_LINE_X TIME_LINE_X - 4
 #define DATE_LINE_Y TIME_LINE_Y - 2
+#define MODE_LINE_X BUTTON_INPUT_X - 8
+#define MODE_LINE_Y BUTTON_INPUT_Y + 2
 
 //for sleep
 #define TIME_KEEPING_SLEEP 10
@@ -114,8 +116,9 @@ void mainProcessA(StateData *, AlarmData *, char);
 void mainProcessB(StateData *, AlarmData *, char);
 void mainProcessC(StateData *, AlarmData *, char);
 void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
-void *alarmThreadFunction(void *);       //Alarm controller thread
-void *backlightThreadFunction(void *);   //Backlight controller thread
+void printModeManual(StateData *);
+void *alarmThreadFunction(void *);     //Alarm controller thread
+void *backlightThreadFunction(void *); //Backlight controller thread
 void *buttonThreadFunction(void *);
 void buttonProcess(char *, char *);      //Process simultaneous input processing
 void timeKeepingMode(StateData *);       // Enable timeKeepingMode

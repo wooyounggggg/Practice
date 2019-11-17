@@ -15,8 +15,8 @@ void setDefault(StateData *state, AlarmData *alarm) //
 {
     state->mode = TIME_KEEPING_MODE; //TIME_KEEPING_MODE;
     state->innerMode = DEFAULT;
-    state->timeKeepingUnit = NONE;
-    state->alarmUnit = NONE;
+    state->timeKeepingUnit = TIME_KEEPING_SEC;
+    state->alarmUnit = ALARM_HOUR;
 
     //state's time struct initialize
     state->currentTime.year = 2019;
@@ -35,8 +35,8 @@ void setDefault(StateData *state, AlarmData *alarm) //
     state->lapTime.msec = 0;
     alarm->alarmIndicator = OFF;
     alarm->alarmState = OFF;
-    alarm->hour = NONE;
-    alarm->min = NONE;
+    alarm->hour = 0;
+    alarm->min = 0;
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, char button) //Decide main controller process based on state, button and alarm data
 {
@@ -188,6 +188,11 @@ void stopWatchLaptime(StateData *state)
 {
     if (state->mode == STOP_WATCH_MODE)
         state->innerMode = STOP_WATCH_LAPTIME;
+    // state->lapTime.year = 0;
+    state->lapTime.min = state->stopWatch.min;
+    state->lapTime.sec = state->stopWatch.sec;
+    state->lapTime.msec = state->stopWatch.msec;
+    // lapTime->year = 0;
     //initialize laptime
 }
 void stopWatchPause(StateData *state)
@@ -231,13 +236,10 @@ void addValue(StateData *state, AlarmData *alarm)
             state->currentTime.year = state->currentTime.year + 1;
             break;
         case TIME_KEEPING_MONTH:
-            state->currentTime.month = (state->currentTime.month + 1) % 12 + 1;
+            state->currentTime.month = (state->currentTime.month) % 12 + 1;
             break;
         case TIME_KEEPING_DAY:
-            if ((state->currentTime.month <= 7 && state->currentTime.month % 2) ||
-                (state->currentTime.month >= 8 && !(state->currentTime.month % 2))) // 31 or 31
-                dayOfMonth = 31;
-            state->currentTime.day = (state->currentTime.day + 1) % dayOfMonth + 1;
+            state->currentTime.day = (state->currentTime.day) % dayOfMonth + 1;
             break;
         default:
             break;
@@ -304,8 +306,12 @@ void textcolor(int foreground, int background)
 
 void modeChangePrint()
 {
-    gotoxy(DATE_LINE_X, DATE_LINE_Y);
-    printf("                            ");
-    gotoxy(TIME_LINE_X, TIME_LINE_Y);
-    printf("                            ");
+    gotoxy(DATE_LINE_X - 10, DATE_LINE_Y);
+    printf("                                        ");
+    gotoxy(TIME_LINE_X - 10, TIME_LINE_Y);
+    printf("                                        ");
+    gotoxy(MODE_LINE_X - 10, MODE_LINE_Y);
+    printf("                                                                                        ");
+    gotoxy(MODE_LINE_X - 10, MODE_LINE_Y + 2);
+    printf("                                                                                        ");
 }

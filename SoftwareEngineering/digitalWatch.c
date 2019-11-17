@@ -1,15 +1,6 @@
 #include "digitalWatch.h"
 int main(void)
 {
-    char *weekOfDays[7] =
-        {
-            "TU",
-            "TH",
-            "WE",
-            "FR",
-            "SA",
-            "SU",
-            "MO"};
     char inputButton[INPUT_BUTTON_SIZE] = {0};         //User's button input. It will be processed and stored at processed button.
     char processedButton[PROCESSED_BUTTON_SIZE] = {0}; //processed 4(random A~D -> D-C-B-A) button from inputButton.
     char currentButton;
@@ -53,26 +44,21 @@ int main(void)
     system("clear");
     while (1)
     {
-        // system("clear");
-        // gotoxy(50, 50);
         if (*(button.buttonThreadBoundaryLine) == UNLOCK)
         {
             for (i = 0; i < buttonLength; i++)
             {
                 currentButton = processedButton[i];
                 pass.button = &currentButton;
-                /**/
                 if (currentButton == 'D')
                 {
                     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
                     pthread_detach(backlightThread);
                 }
-                /**/
                 decideMainProcess(&state, &alarm, currentButton);
             }
             mainBoundaryLine = CLEAR;
             *(button.buttonThreadBoundaryLine) = LOCK;
-            // gotoxy(BUTTON_INPUT_X, BUTTON_INPUT_Y);
         }
         if (getButtonLength(processedButton) > 0)
         {
@@ -99,44 +85,59 @@ void timeProcess(StateData *state, AlarmData *alarm)
     TimeSet *currentTime = &state->currentTime;
     static int timeKeepAddCheck = 0;
     static int stopWatchAddCheck = 0;
+    static int laptimeRenewCheck = 0;
     timeKeepAddCheck++;
-    int dayOfMonth = 30 + ((currentTime->month <= 7 && currentTime->month % 2) || //31 or 30
-                           (currentTime->month >= 8 && !(currentTime->month % 2)));
+    int dayOfMonth = 30; /*+ ((currentTime->month <= 7 && currentTime->month % 2) || //31 or 30
+                           (currentTime->month >= 8 && !(currentTime->month % 2)));*/
+    // if (currentTime->month == 2)
+    //     dayOfMonth = 28;
+    // if ((currentTime->year % 4 == 0 && currentTime->year % 100 != 0) || currentTime->year % 400 == 0)
+    //     dayOfMonth = 29;
     Sleep(TIME_KEEPING_SLEEP);
-    if (timeKeepAddCheck % (1000 / TIME_KEEPING_SLEEP) == 0)
-        currentTime->sec++;
-    if (currentTime->sec >= 60)
+    if (state->innerMode != TIME_KEEPING_SET)
     {
-        currentTime->sec = 0;
-        currentTime->min++;
-    }
-    if (currentTime->min >= 60)
-    {
-        currentTime->min = 0;
-        currentTime->hour++;
-    }
-    if (currentTime->hour >= 24)
-    {
-        currentTime->hour = 0;
-        currentTime->day++;
-        currentTime->dayOfWeek = currentTime->dayOfWeek % 7;
-    }
-    if (currentTime->day >= dayOfMonth + 1)
-    {
-        currentTime->day = 1;
-        currentTime->month++;
-    }
-    if (currentTime->month >= 13)
-    {
-        currentTime->month = 1;
-        currentTime->year++;
+        if (timeKeepAddCheck % (1000 / TIME_KEEPING_SLEEP) == 0)
+        {
+            currentTime->sec++;
+            timeKeepAddCheck = 0;
+        }
+        if (currentTime->sec >= 60)
+        {
+            currentTime->sec = 0;
+            currentTime->min++;
+        }
+        if (currentTime->min >= 60)
+        {
+            currentTime->min = 0;
+            currentTime->hour++;
+        }
+        if (currentTime->hour >= 24)
+        {
+            currentTime->hour = 0;
+            currentTime->day++;
+            currentTime->dayOfWeek = currentTime->dayOfWeek % 7;
+        }
+        if (currentTime->day >= dayOfMonth + 1)
+        {
+            currentTime->day = 1;
+            currentTime->month++;
+        }
+        if (currentTime->month >= 13)
+        {
+            currentTime->month = 1;
+            currentTime->year++;
+        }
     }
     if (state->mode == STOP_WATCH_MODE && (state->innerMode == STOP_WATCH_RUN || state->innerMode == STOP_WATCH_LAPTIME))
     {
         TimeSet *stopWatchTime = &state->stopWatch;
-        Sleep(STOP_WATCH_SLEEP);
-        if (stopWatchAddCheck % (1000 / (STOP_WATCH_SLEEP * 10)) == 0)
-            stopWatchTime->msec++;
+        TimeSet *lapTime = &state->lapTime;
+        Sleep(1);
+        // if (stopWatchAddCheck % (1000 / (STOP_WATCH_SLEEP * 100)) == 0)
+        // {
+        stopWatchTime->msec++;
+        //     stopWatchAddCheck = 0;
+        // }
         if (stopWatchTime->msec >= 100)
         {
             stopWatchTime->msec = 0;
@@ -151,27 +152,93 @@ void timeProcess(StateData *state, AlarmData *alarm)
 }
 void showWatch(StateData *state, AlarmData *alarm) // show watch based on StateData
 {
+    modeChangePrint();
+    printModeManual(state);
+    char indicator[4] = "OFF";
     if (state->mode == TIME_KEEPING_MODE) // Time Keeping Mode
     {
         TimeSet *currentTime = &state->currentTime;
-        modeChangePrint();
-        gotoxy(DATE_LINE_X, DATE_LINE_Y);
+        // gotoxy(MODE_LINE_X, MODE_LINE_Y);
+        // printf("Time Ke")
+        gotoxy(DATE_LINE_X - 4, DATE_LINE_Y);
         printf("%04d년 %02d월 %02d일", currentTime->year, currentTime->month, currentTime->day);
-        gotoxy(TIME_LINE_X, TIME_LINE_Y);
+        gotoxy(TIME_LINE_X - 4, TIME_LINE_Y);
         printf("%02d:%02d:%02d", currentTime->hour, currentTime->min, currentTime->sec);
     }
     else if (state->mode == STOP_WATCH_MODE) // Stop Watch Mode
     {
-        TimeSet *stopWatchTime = &state->stopWatch;
-        modeChangePrint();
-        gotoxy(TIME_LINE_X, TIME_LINE_Y);
-        printf("%02d:%02d:%02d", stopWatchTime->min, stopWatchTime->sec, stopWatchTime->msec);
+        // gotoxy(MODE_LINE_X, MODE_LINE_Y);
+        // printf("Stop Watch");
+        gotoxy(TIME_LINE_X - 6, DATE_LINE_Y);
+        printf(" SU  %d월%d일", state->currentTime.month, state->currentTime.day);
+        gotoxy(TIME_LINE_X - 4, TIME_LINE_Y);
+        if (state->innerMode == STOP_WATCH_LAPTIME)
+        {
+            TimeSet *lapTime = &state->lapTime;
+            printf("%d'%02d''%02d", lapTime->min, lapTime->sec, lapTime->msec);
+            return;
+        }
+        else
+        {
+            TimeSet *stopWatchTime = &state->stopWatch;
+            printf("%d'%02d''%02d", stopWatchTime->min, stopWatchTime->sec, stopWatchTime->msec);
+        }
     }
     else if (state->mode == ALARM_MODE) // Alarm Mode
     {
+        // gotoxy(MODE_LINE_X, MODE_LINE_Y);
+        // printf("Alarm");
+        if (alarm->alarmIndicator)
+        {
+            strcpy(indicator, "ON");
+        }
+        gotoxy(TIME_LINE_X - 7, DATE_LINE_Y);
+        printf("AL %s", indicator);
+        gotoxy(TIME_LINE_X, DATE_LINE_Y);
+        printf(" %d월%d일", state->currentTime.month, state->currentTime.day);
+        gotoxy(TIME_LINE_X - 3, TIME_LINE_Y);
+        printf("%02d:%02d", alarm->hour, alarm->min);
     }
 }
 
+void printModeManual(StateData *state)
+{
+    gotoxy(MODE_LINE_X, MODE_LINE_Y);
+    if (state->mode == TIME_KEEPING_MODE)
+    {
+        if (state->innerMode == DEFAULT)
+            printf("A : 시간 설정  C : 스탑워치");
+        else if (state->innerMode = TIME_KEEPING_SET)
+        {
+            gotoxy(MODE_LINE_X - 4, MODE_LINE_Y);
+            printf("A : 설정 완료  B : 시간 증가  C : 설정 대상 변경");
+        }
+    }
+    else if (state->mode == STOP_WATCH_MODE)
+    {
+        if (state->innerMode == DEFAULT)
+            printf("B : 스탑워치 시작  C : 알람");
+        else if (state->innerMode == STOP_WATCH_RUN)
+            printf("A : 기록  B : 스탑워치 멈춤");
+        else if (state->innerMode == STOP_WATCH_LAPTIME)
+            printf("A : 기록 갱신  B : 스탑워치 보기");
+        else if (state->innerMode == STOP_WATCH_PAUSE)
+            printf("A : 스탑워치 초기화  B : 스탑워치 재시작");
+    }
+    else if (state->mode == ALARM_MODE)
+    {
+        if (state->innerMode == DEFAULT)
+        {
+            gotoxy(MODE_LINE_X - 5, MODE_LINE_Y);
+            printf("A : 알람 설정  B : 알람 ON/OFF  C : 현재 시간");
+        }
+        else if (state->innerMode == ALARM_SET)
+        {
+            gotoxy(MODE_LINE_X - 7, MODE_LINE_Y);
+            printf("A : 알람 보기  B : 시간 증가  C : 설정 대상 변경");
+        }
+    }
+}
 void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass tm data
 {
     PassingData *pass = (PassingData *)_pass;
