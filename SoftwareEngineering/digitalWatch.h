@@ -48,7 +48,15 @@
 
 //for gotoxy
 #define BUTTON_INPUT_X 125
-#define BUTTON_INPUT_Y 50
+#define BUTTON_INPUT_Y 25
+#define TIME_LINE_X BUTTON_INPUT_X + 5
+#define TIME_LINE_Y BUTTON_INPUT_Y - 5
+#define DATE_LINE_X TIME_LINE_X - 4
+#define DATE_LINE_Y TIME_LINE_Y - 2
+
+//for sleep
+#define TIME_KEEPING_SLEEP 10
+#define STOP_WATCH_SLEEP 10
 typedef struct TimeSet
 {
     int year;
@@ -58,6 +66,7 @@ typedef struct TimeSet
     int min;
     int sec;
     int msec;
+    int dayOfWeek;
 } TimeSet;
 typedef struct AlarmData
 {
@@ -120,11 +129,12 @@ void alarmMode(StateData *); // Enable alarmMode
 void alarmSetMode(StateData *);
 void alarmIndicator(AlarmData *);
 void addValue(StateData *, AlarmData *);
+void timeProcess(StateData *sate, AlarmData *);
 void showWatch(StateData *, AlarmData *); // show watch based on StateData
 void selectionSort(char *);
 int getMaxIdx(char *, int);
 int getButtonLength(char *);
 void gotoxy(int, int);
 void textcolor(int, int);
-
+void modeChangePrint();
 // pthread_mutex_t mutex_lock;

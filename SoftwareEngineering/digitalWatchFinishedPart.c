@@ -17,7 +17,22 @@ void setDefault(StateData *state, AlarmData *alarm) //
     state->innerMode = DEFAULT;
     state->timeKeepingUnit = NONE;
     state->alarmUnit = NONE;
+
     //state's time struct initialize
+    state->currentTime.year = 2019;
+    state->currentTime.month = 12;
+    state->currentTime.day = 31;
+    state->currentTime.hour = 23;
+    state->currentTime.min = 59;
+    state->currentTime.sec = 0;
+    state->currentTime.dayOfWeek = 0;
+    state->stopWatch.min = 0;
+    state->stopWatch.sec = 0;
+    state->stopWatch.msec = 0;
+
+    state->lapTime.min = 0;
+    state->lapTime.sec = 0;
+    state->lapTime.msec = 0;
     alarm->alarmIndicator = OFF;
     alarm->alarmState = OFF;
     alarm->hour = NONE;
@@ -49,7 +64,6 @@ void decideMainProcess(StateData *state, AlarmData *alarm, char button) //Decide
 }
 void mainProcessA(StateData *state, AlarmData *alarm, char button) // main process for button 'A'
 {
-    printf("\nProcess A\n");
     if (state->mode == TIME_KEEPING_MODE)
     {
         if (state->innerMode == DEFAULT)
@@ -71,12 +85,9 @@ void mainProcessA(StateData *state, AlarmData *alarm, char button) // main proce
         else if (state->innerMode == ALARM_SET)
             alarmMode(state);
     }
-    printf("mode : %d, inner mode : %d indicator : %d\n", state->mode, state->innerMode, alarm->alarmIndicator);
-    printf("\n");
 }
 void mainProcessB(StateData *state, AlarmData *alarm, char button) // main process for button 'B'
 {
-    printf("Process B\n");
     if (state->mode == TIME_KEEPING_MODE)
     {
         if (state->innerMode == TIME_KEEPING_SET && state->timeKeepingUnit != NONE)
@@ -100,12 +111,9 @@ void mainProcessB(StateData *state, AlarmData *alarm, char button) // main proce
         else if (state->innerMode == DEFAULT)
             alarmIndicator(alarm);
     }
-    printf("mode : %d, inner mode : %d indicator : %d\n", state->mode, state->innerMode, alarm->alarmIndicator);
-    printf("\n");
 }
 void mainProcessC(StateData *state, AlarmData *alarm, char button) // main process for button 'C'
 {
-    printf("Process C\n");
     if (state->innerMode == DEFAULT) //mode change
         state->mode = (state->mode + 1) % 3;
     else if (state->mode == TIME_KEEPING_MODE)
@@ -113,8 +121,6 @@ void mainProcessC(StateData *state, AlarmData *alarm, char button) // main proce
 
     else if (state->mode == ALARM_MODE)
         state->alarmUnit = (state->alarmUnit + 1) % 2;
-    printf("mode : %d, inner mode : %d indicator : %d\n", state->mode, state->innerMode, alarm->alarmIndicator);
-    printf("\n");
 }
 void buttonInitialize(char *button, int begin, int size) //Initialize button in range begin ~ MAX
 {
@@ -149,6 +155,7 @@ void timeKeepingMode(StateData *state) // Enable timeKeepingMode
     state->mode = TIME_KEEPING_MODE;
     state->innerMode = DEFAULT;
     state->timeKeepingUnit = NONE;
+    modeChangePrint();
 }
 
 void timeKeepingSet(StateData *state) // Enable timeKeepingSet
@@ -167,6 +174,10 @@ void stopWatchMode(StateData *state) // Enable stopWatchMode
 {
     state->mode = STOP_WATCH_MODE;
     state->innerMode = DEFAULT;
+    state->stopWatch.min = 0;
+    state->stopWatch.sec = 0;
+    state->stopWatch.msec = 0;
+    modeChangePrint();
 }
 
 void stopWatchRun(StateData *state)
@@ -188,6 +199,7 @@ void alarmMode(StateData *state) // Enable alarmMode
 {
     state->mode = ALARM_MODE;
     state->innerMode = DEFAULT;
+    modeChangePrint();
 }
 
 void alarmSetMode(StateData *state)
@@ -288,4 +300,12 @@ void textcolor(int foreground, int background)
 {
     int color = foreground + background * 16;
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+
+void modeChangePrint()
+{
+    gotoxy(DATE_LINE_X, DATE_LINE_Y);
+    printf("                            ");
+    gotoxy(TIME_LINE_X, TIME_LINE_Y);
+    printf("                            ");
 }
