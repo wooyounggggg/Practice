@@ -1,5 +1,42 @@
 #include "digitalWatch.h"
-
+void printModeManual(StateData *state)
+{
+    gotoxy(MODE_LINE_X, MODE_LINE_Y);
+    if (state->mode == TIME_KEEPING_MODE)
+    {
+        if (state->innerMode == DEFAULT)
+            printf("A : 시간 설정  C : 스탑워치");
+        else if (state->innerMode = TIME_KEEPING_SET)
+        {
+            gotoxy(MODE_LINE_X - 4, MODE_LINE_Y);
+            printf("A : 설정 완료  B : 시간 증가  C : 설정 대상 변경");
+        }
+    }
+    else if (state->mode == STOP_WATCH_MODE)
+    {
+        if (state->innerMode == DEFAULT)
+            printf("B : 스탑워치 시작  C : 알람");
+        else if (state->innerMode == STOP_WATCH_RUN)
+            printf("A : 기록  B : 스탑워치 멈춤");
+        else if (state->innerMode == STOP_WATCH_LAPTIME)
+            printf("A : 기록 갱신  B : 스탑워치 보기");
+        else if (state->innerMode == STOP_WATCH_PAUSE)
+            printf("A : 스탑워치 초기화  B : 스탑워치 재시작");
+    }
+    else if (state->mode == ALARM_MODE)
+    {
+        if (state->innerMode == DEFAULT)
+        {
+            gotoxy(MODE_LINE_X - 5, MODE_LINE_Y);
+            printf("A : 알람 설정  B : 알람 ON/OFF  C : 현재 시간");
+        }
+        else if (state->innerMode == ALARM_SET)
+        {
+            gotoxy(MODE_LINE_X - 7, MODE_LINE_Y);
+            printf("A : 알람 보기  B : 시간 증가  C : 설정 대상 변경");
+        }
+    }
+}
 void *backlightThreadFunction(void *_pass) //Backlight controller thread. need to pass tm data
 {
     PassingData *pass = (PassingData *)_pass;
@@ -20,11 +57,11 @@ void setDefault(StateData *state, AlarmData *alarm) //
 
     //state's time struct initialize
     state->currentTime.year = 2019;
-    state->currentTime.month = 12;
-    state->currentTime.day = 31;
-    state->currentTime.hour = 23;
+    state->currentTime.month = 1;
+    state->currentTime.day = 1;
+    state->currentTime.hour = 0;
     state->currentTime.min = 59;
-    state->currentTime.sec = 0;
+    state->currentTime.sec = 59;
     state->currentTime.dayOfWeek = 0;
     state->stopWatch.min = 0;
     state->stopWatch.sec = 0;
@@ -33,9 +70,9 @@ void setDefault(StateData *state, AlarmData *alarm) //
     state->lapTime.min = 0;
     state->lapTime.sec = 0;
     state->lapTime.msec = 0;
-    alarm->alarmIndicator = OFF;
+    alarm->alarmIndicator = ON;
     alarm->alarmState = OFF;
-    alarm->hour = 0;
+    alarm->hour = 1;
     alarm->min = 0;
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, char button) //Decide main controller process based on state, button and alarm data
@@ -154,7 +191,7 @@ void timeKeepingMode(StateData *state) // Enable timeKeepingMode
 {
     state->mode = TIME_KEEPING_MODE;
     state->innerMode = DEFAULT;
-    state->timeKeepingUnit = NONE;
+    state->timeKeepingUnit = TIME_KEEPING_SEC;
     modeChangePrint();
 }
 
@@ -234,12 +271,19 @@ void addValue(StateData *state, AlarmData *alarm)
             break;
         case TIME_KEEPING_YEAR:
             state->currentTime.year = state->currentTime.year + 1;
+            state->currentTime.dayOfWeek = (state->currentTime.dayOfWeek + 365) % 7;
             break;
         case TIME_KEEPING_MONTH:
             state->currentTime.month = (state->currentTime.month) % 12 + 1;
+            state->currentTime.dayOfWeek = (state->currentTime.dayOfWeek + 30) % 7;
+            if (state->currentTime.month == 1)
+                state->currentTime.dayOfWeek = (state->currentTime.dayOfWeek + 4) % 7;
             break;
         case TIME_KEEPING_DAY:
             state->currentTime.day = (state->currentTime.day) % dayOfMonth + 1;
+            state->currentTime.dayOfWeek = (state->currentTime.dayOfWeek + 1) % 7;
+            if (state->currentTime.day == 1)
+                state->currentTime.dayOfWeek = (state->currentTime.dayOfWeek + 5) % 7;
             break;
         default:
             break;

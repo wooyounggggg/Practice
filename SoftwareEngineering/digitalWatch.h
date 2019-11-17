@@ -59,6 +59,7 @@
 //for sleep
 #define TIME_KEEPING_SLEEP 10
 #define STOP_WATCH_SLEEP 10
+#define ALARM_SLEEP 500
 typedef struct TimeSet
 {
     int year;
@@ -99,6 +100,7 @@ typedef struct PassingData //Data to backlight & alarm controller
     int *alarmThreadBoundaryLine;
     int *mainBoundaryLine;
     int *backlightThreadCounter;
+    int *alarmThreadCounter;
 } PassingData;
 typedef struct ButtonData
 {
@@ -140,4 +142,5 @@ int getButtonLength(char *);
 void gotoxy(int, int);
 void textcolor(int, int);
 void modeChangePrint();
+int isAlarmTime(StateData *, AlarmData *);
 // pthread_mutex_t mutex_lock;
