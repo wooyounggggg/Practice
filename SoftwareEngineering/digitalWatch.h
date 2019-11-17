@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <string.h>
+#include <time.h>
+#include <windows.h>
 #define ON 1
 #define OFF 0
 //struct State Data variable mode preset
@@ -114,7 +120,7 @@ void alarmMode(StateData *); // Enable alarmMode
 void alarmSetMode(StateData *);
 void alarmIndicator(AlarmData *);
 void addValue(StateData *, AlarmData *);
-void showWatch(StateData *); // show watch based on StateData
+void showWatch(StateData *, AlarmData *); // show watch based on StateData
 void selectionSort(char *);
 int getMaxIdx(char *, int);
 int getButtonLength(char *);
