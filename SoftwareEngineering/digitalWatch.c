@@ -8,11 +8,6 @@ int main(void)
     AlarmData alarm;
     PassingData pass;
     ButtonData button;
-    timer_t timer;
-    struct tm *currentTime;
-    struct tm *backlightTime;
-    struct tm *alarmTime;
-    struct tm modifyTimeValue;
     pthread_t alarmThread;
     pthread_t backlightThread;
     pthread_t buttonThread;
@@ -24,9 +19,10 @@ int main(void)
     int mainBoundaryLine;
     int backlightThreadCounter = 0;
     int alarmThreadCounter = 0;
+    int alarmState = OFF;
     setDefault(&state, &alarm); //state, alarm initialize
-    currentTime = localtime(&timer);
     pass.alarm = &alarm;
+    alarm.alarmState = &alarmState;
     pass.backlightThreadBoundaryLine = &backlightThreadBoundaryLine;
     pass.alarmThreadBoundaryLine = &alarmThreadBoundaryLine;
     pass.mainBoundaryLine = &mainBoundaryLine;
@@ -85,135 +81,6 @@ int main(void)
     return 0;
 }
 
-void timeProcess(StateData *state, AlarmData *alarm)
-{
-    TimeSet *currentTime = &state->currentTime;
-    static int timeKeepAddCheck = 0;
-    static int stopWatchAddCheck = 0;
-    static int laptimeRenewCheck = 0;
-    timeKeepAddCheck++;
-    int dayOfMonth = 30; /*+ ((currentTime->month <= 7 && currentTime->month % 2) || //31 or 30
-                           (currentTime->month >= 8 && !(currentTime->month % 2)));*/
-    // if (currentTime->month == 2)
-    //     dayOfMonth = 28;
-    // if ((currentTime->year % 4 == 0 && currentTime->year % 100 != 0) || currentTime->year % 400 == 0)
-    //     dayOfMonth = 29;
-    Sleep(TIME_KEEPING_SLEEP);
-    if (state->innerMode != TIME_KEEPING_SET)
-    {
-        if (timeKeepAddCheck % (1000 / TIME_KEEPING_SLEEP) == 0)
-        {
-            currentTime->sec++;
-            timeKeepAddCheck = 0;
-        }
-        if (currentTime->sec >= 60)
-        {
-            currentTime->sec = 0;
-            currentTime->min++;
-        }
-        if (currentTime->min >= 60)
-        {
-            currentTime->min = 0;
-            currentTime->hour++;
-        }
-        if (currentTime->hour >= 24)
-        {
-            currentTime->hour = 0;
-            currentTime->day++;
-            currentTime->dayOfWeek = currentTime->dayOfWeek % 7;
-        }
-        if (currentTime->day >= dayOfMonth + 1)
-        {
-            currentTime->day = 1;
-            currentTime->dayOfWeek = (currentTime->dayOfWeek + 6) % 7;
-            currentTime->month++;
-        }
-        if (currentTime->month >= 13)
-        {
-            currentTime->month = 1;
-            currentTime->year++;
-        }
-    }
-    if (state->mode == STOP_WATCH_MODE && (state->innerMode == STOP_WATCH_RUN || state->innerMode == STOP_WATCH_LAPTIME))
-    {
-        TimeSet *stopWatchTime = &state->stopWatch;
-        TimeSet *lapTime = &state->lapTime;
-        Sleep(1);
-        // if (stopWatchAddCheck % (1000 / (STOP_WATCH_SLEEP * 100)) == 0)
-        // {
-        stopWatchTime->msec++;
-        //     stopWatchAddCheck = 0;
-        // }
-        if (stopWatchTime->msec >= 100)
-        {
-            stopWatchTime->msec = 0;
-            stopWatchTime->sec++;
-        }
-        if (stopWatchTime->sec >= 60)
-        {
-            stopWatchTime->sec = 0;
-            stopWatchTime->min++;
-        }
-    }
-}
-void showWatch(StateData *state, AlarmData *alarm) // show watch based on StateData
-{
-    modeChangePrint();
-    printModeManual(state);
-    char *dayOfWeek[7] = {
-        "TU",
-        "WE",
-        "TH",
-        "FR",
-        "ST",
-        "SU",
-        "MO"};
-    char indicator[4] = "OFF";
-    if (state->mode == TIME_KEEPING_MODE) // Time Keeping Mode
-    {
-        TimeSet *currentTime = &state->currentTime;
-        // gotoxy(MODE_LINE_X, MODE_LINE_Y);
-        // printf("Time Ke")
-        gotoxy(DATE_LINE_X - 6, DATE_LINE_Y);
-        printf("%s  %04d년 %02d월 %02d일", dayOfWeek[state->currentTime.dayOfWeek], currentTime->year, currentTime->month, currentTime->day);
-        gotoxy(TIME_LINE_X - 4, TIME_LINE_Y);
-        printf("%02d:%02d:%02d", currentTime->hour, currentTime->min, currentTime->sec);
-    }
-    else if (state->mode == STOP_WATCH_MODE) // Stop Watch Mode
-    {
-        // gotoxy(MODE_LINE_X, MODE_LINE_Y);
-        // printf("Stop Watch");
-        gotoxy(TIME_LINE_X - 6, DATE_LINE_Y);
-        printf(" SU  %d월%d일", state->currentTime.month, state->currentTime.day);
-        gotoxy(TIME_LINE_X - 4, TIME_LINE_Y);
-        if (state->innerMode == STOP_WATCH_LAPTIME)
-        {
-            TimeSet *lapTime = &state->lapTime;
-            printf("%d'%02d''%02d", lapTime->min, lapTime->sec, lapTime->msec);
-            return;
-        }
-        else
-        {
-            TimeSet *stopWatchTime = &state->stopWatch;
-            printf("%d'%02d''%02d", stopWatchTime->min, stopWatchTime->sec, stopWatchTime->msec);
-        }
-    }
-    else if (state->mode == ALARM_MODE) // Alarm Mode
-    {
-        // gotoxy(MODE_LINE_X, MODE_LINE_Y);
-        // printf("Alarm");
-        if (alarm->alarmIndicator)
-        {
-            strcpy(indicator, "ON");
-        }
-        gotoxy(TIME_LINE_X - 7, DATE_LINE_Y);
-        printf("AL %s", indicator);
-        gotoxy(TIME_LINE_X, DATE_LINE_Y);
-        printf(" %d월%d일", state->currentTime.month, state->currentTime.day);
-        gotoxy(TIME_LINE_X - 3, TIME_LINE_Y);
-        printf("%02d:%02d", alarm->hour, alarm->min);
-    }
-}
 void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass tm data
 {
     //time = 1000 -> 1
@@ -224,20 +91,19 @@ void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass t
     *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) + 1;
     for (i = 0; i < (5000 / ALARM_SLEEP); i++)
     {
-        // printf("%d\n", *(pass->backlightThreadCounter));
         if (i % (1000 / ALARM_SLEEP / 2) == 0)
             printf("\a\n");
         Sleep(ALARM_SLEEP);
-        // if (*(pass->button) != 0)
-        // {
-        //     pass->alarm->alarmIndicator = OFF;
-        //     *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
-        //     break;
-        // }
+        if (*(pass->alarm->alarmState) == OFF)
+        {
+            pass->alarm->alarmIndicator = OFF;
+            *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
+            break;
+        }
     }
-    *(pass->backlightThreadCounter) = *(pass->backlightThreadCounter) - 1;
+    *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
     if (*(pass->backlightThreadCounter) == 0)
-        pass->alarm->alarmIndicator = OFF;
+        *(pass->alarm->alarmState) = OFF;
 }
 
 void *buttonThreadFunction(void *_buttonList)
