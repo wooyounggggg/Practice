@@ -47,6 +47,7 @@
 #define LOCK 0
 
 //for gotoxy
+#define MODIFY_X 35
 #define BUTTON_INPUT_X 125
 #define BUTTON_INPUT_Y 25
 #define TIME_LINE_X BUTTON_INPUT_X + 5
@@ -58,7 +59,7 @@
 
 //for sleep
 #define TIME_KEEPING_SLEEP 10
-#define STOP_WATCH_SLEEP 10
+#define STOP_WATCH_SLEEP 1
 #define ALARM_SLEEP 10
 typedef struct TimeSet
 {

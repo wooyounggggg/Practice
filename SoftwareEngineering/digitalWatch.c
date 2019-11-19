@@ -19,8 +19,7 @@ int main(void)
     int mainBoundaryLine;
     int backlightThreadCounter = 0;
     int alarmThreadCounter = 0;
-    int alarmState = OFF;
-    setDefault(&state, &alarm); //state, alarm initialize
+    int alarmState;
     pass.alarm = &alarm;
     alarm.alarmState = &alarmState;
     pass.backlightThreadBoundaryLine = &backlightThreadBoundaryLine;
@@ -28,7 +27,6 @@ int main(void)
     pass.mainBoundaryLine = &mainBoundaryLine;
     pass.backlightThreadCounter = &backlightThreadCounter;
     pass.alarmThreadCounter = &alarmThreadCounter;
-
     button.inputButton = inputButton;
     button.processedButton = processedButton;
     button.buttonLength = &buttonLength;
@@ -43,6 +41,7 @@ int main(void)
     {
         if (isAlarmTime(&state, &alarm) && alarmThreadCounter == 0)
         {
+            alarmState = ON;
             pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
             pthread_detach(alarmThread);
         }
@@ -53,6 +52,11 @@ int main(void)
             {
                 currentButton = processedButton[i];
                 pass.button = &currentButton;
+                if (alarmState == ON)
+                {
+                    alarmState = OFF;
+                    continue;
+                }
                 if (currentButton == 'D')
                 {
                     pthread_create(&backlightThread, NULL, &backlightThreadFunction, (void *)&pass);
@@ -83,9 +87,6 @@ int main(void)
 
 void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass tm data
 {
-    //time = 1000 -> 1
-    //time = 100 -> 10
-    //time = 10 -> 100
     PassingData *pass = (PassingData *)_pass;
     int i;
     *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) + 1;
@@ -94,16 +95,13 @@ void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass t
         if (i % (1000 / ALARM_SLEEP / 2) == 0)
             printf("\a\n");
         Sleep(ALARM_SLEEP);
-        if (*(pass->alarm->alarmState) == OFF)
+        if (*(pass->alarm->alarmState) == OFF) /*error : pass->alarm->alarmState4*/
         {
-            pass->alarm->alarmIndicator = OFF;
             *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
             break;
         }
     }
     *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
-    if (*(pass->backlightThreadCounter) == 0)
-        *(pass->alarm->alarmState) = OFF;
 }
 
 void *buttonThreadFunction(void *_buttonList)

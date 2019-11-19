@@ -8,10 +8,10 @@ void timeProcess(StateData *state, AlarmData *alarm)
     timeKeepAddCheck++;
     int dayOfMonth = 30; /*+ ((currentTime->month <= 7 && currentTime->month % 2) || //31 or 30
                            (currentTime->month >= 8 && !(currentTime->month % 2)));*/
-    // if (currentTime->month == 2)
-    //     dayOfMonth = 28;
-    // if ((currentTime->year % 4 == 0 && currentTime->year % 100 != 0) || currentTime->year % 400 == 0)
-    //     dayOfMonth = 29;
+                         // if (currentTime->month == 2)
+                         //     dayOfMonth = 28;
+                         // if ((currentTime->year % 4 == 0 && currentTime->year % 100 != 0) || currentTime->year % 400 == 0)
+                         //     dayOfMonth = 29;
     Sleep(TIME_KEEPING_SLEEP);
     if (state->innerMode != TIME_KEEPING_SET)
     {
@@ -52,12 +52,8 @@ void timeProcess(StateData *state, AlarmData *alarm)
     {
         TimeSet *stopWatchTime = &state->stopWatch;
         TimeSet *lapTime = &state->lapTime;
-        Sleep(1);
-        // if (stopWatchAddCheck % (1000 / (STOP_WATCH_SLEEP * 100)) == 0)
-        // {
         stopWatchTime->msec++;
-        //     stopWatchAddCheck = 0;
-        // }
+
         if (stopWatchTime->msec >= 100)
         {
             stopWatchTime->msec = 0;
@@ -191,8 +187,8 @@ void setDefault(StateData *state, AlarmData *alarm) //
     state->currentTime.month = 1;
     state->currentTime.day = 1;
     state->currentTime.hour = 0;
-    state->currentTime.min = 59;
-    state->currentTime.sec = 59;
+    state->currentTime.min = 0;
+    state->currentTime.sec = 0;
     state->currentTime.dayOfWeek = 0;
     state->stopWatch.min = 0;
     state->stopWatch.sec = 0;
@@ -201,9 +197,9 @@ void setDefault(StateData *state, AlarmData *alarm) //
     state->lapTime.min = 0;
     state->lapTime.sec = 0;
     state->lapTime.msec = 0;
-    alarm->alarmIndicator = ON;
-    alarm->alarmState = OFF;
-    alarm->hour = 1;
+    alarm->alarmIndicator = OFF;
+    *(alarm->alarmState) = OFF;
+    alarm->hour = 0;
     alarm->min = 0;
 }
 void decideMainProcess(StateData *state, AlarmData *alarm, char button) //Decide main controller process based on state, button and alarm data
