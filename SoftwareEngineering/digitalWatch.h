@@ -9,8 +9,8 @@
 #define OFF 0
 //struct State Data variable mode preset
 #define TIME_KEEPING_MODE 0 // mode == timeKeeping
-#define STOP_WATCH_MODE 1   // mode == stopWatch
-#define ALARM_MODE 2        // mode == alarm
+#define ALARM_MODE 1        // mode == alarm
+#define STOP_WATCH_MODE 2   // mode == stopWatch
 
 //struct State Data variable innerMode preset
 #define DEFAULT 0            // inner mode == default
@@ -47,8 +47,8 @@
 #define LOCK 0
 
 //for gotoxy
-#define MODIFY_X 35
-#define BUTTON_INPUT_X 125
+#define MODIFY_X 0
+#define BUTTON_INPUT_X 125 - MODIFY_X
 #define BUTTON_INPUT_Y 25
 #define TIME_LINE_X BUTTON_INPUT_X + 5
 #define TIME_LINE_Y BUTTON_INPUT_Y - 5
@@ -61,7 +61,7 @@
 #define TIME_KEEPING_SLEEP 10
 #define STOP_WATCH_SLEEP 1
 #define ALARM_SLEEP 10
-typedef struct TimeSet
+typedef struct TimeSet //time data
 {
     int year;
     int month;
@@ -72,7 +72,7 @@ typedef struct TimeSet
     int msec;
     int dayOfWeek;
 } TimeSet;
-typedef struct AlarmData
+typedef struct AlarmData //AlarmData of digital watch
 {
     int alarmIndicator;
     int *alarmState;
@@ -80,7 +80,7 @@ typedef struct AlarmData
     int min;
 } AlarmData;
 
-typedef struct StateData
+typedef struct StateData //StateData of digital watch
 {
     char mode;
     char innerMode;
@@ -91,7 +91,7 @@ typedef struct StateData
     TimeSet lapTime;
 } StateData;
 
-typedef struct PassingData //Data to backlight & alarm controller
+typedef struct PassingData //Data for backlight & alarm controller
 {
     AlarmData *alarm;
     char *button;
@@ -104,7 +104,7 @@ typedef struct PassingData //Data to backlight & alarm controller
     int *backlightThreadCounter;
     int *alarmThreadCounter;
 } PassingData;
-typedef struct ButtonData
+typedef struct ButtonData //Data for button input control
 {
     char *inputButton;
     char *processedButton;
@@ -112,38 +112,37 @@ typedef struct ButtonData
     int *buttonThreadBoundaryLine;
     int *mainBoundaryLine;
     int *alarmState;
-    // char *currentButton;
 } ButtonData;
 
-void setDefault(StateData *, AlarmData *);
+void setDefault(StateData *, AlarmData *);              //Default set of digital watch
+void printWatchManual(StateData *);                     //Print watch's manual for each mode
+void timeProcess(StateData *sate, AlarmData *);         //Process Time flow of Time Keeping & StopWatch
+void showWatch(StateData *, AlarmData *);               //Show watch based on StateData, Alarm Data
 void decideMainProcess(StateData *, AlarmData *, char); //Decide main controller process based on state, button and alarm data
-void mainProcessA(StateData *, AlarmData *, char);
-void mainProcessB(StateData *, AlarmData *, char);
-void mainProcessC(StateData *, AlarmData *, char);
-void buttonInitialize(char *, int, int); //Initialize button in range begin ~ MAX
-void printModeManual(StateData *);
-void *alarmThreadFunction(void *);     //Alarm controller thread
-void *backlightThreadFunction(void *); //Backlight controller thread
-void *buttonThreadFunction(void *);
-void buttonProcess(char *, char *);      //Process simultaneous input processing
-void timeKeepingMode(StateData *);       // Enable timeKeepingMode
-void timeKeepingSet(StateData *);        // Enable timeKeepingSet
-void timeKeepingUnitChange(StateData *); // Trigger timeKeeping unit change
-void stopWatchMode(StateData *);         // Enable stopWatchMode
-void stopWatchLaptime(StateData *);
-void stopWatchRun(StateData *);
-void stopWatchPause(StateData *);
-void alarmMode(StateData *); // Enable alarmMode
-void alarmSetMode(StateData *);
-void alarmIndicator(AlarmData *);
-void addValue(StateData *, AlarmData *);
-void timeProcess(StateData *sate, AlarmData *);
-void showWatch(StateData *, AlarmData *); // show watch based on StateData
-void selectionSort(char *);
-int getMaxIdx(char *, int);
-int getButtonLength(char *);
-void gotoxy(int, int);
-void textcolor(int, int);
-void modeChangePrint();
-int isAlarmTime(StateData *, AlarmData *);
-void printUnderLine(StateData);
+void mainProcessA(StateData *, AlarmData *, char);      //Main process for button 'A'
+void mainProcessB(StateData *, AlarmData *, char);      //Main process for button 'B'
+void mainProcessC(StateData *, AlarmData *, char);      //Main process for button 'C'
+void *buttonThreadFunction(void *);                     //Thread for user input
+void buttonProcess(char *, char *);                     //Process simultaneous input processing
+void buttonInitialize(char *, int, int);                //Initialize button in range begin ~ MAX
+void *alarmThreadFunction(void *);                      //Alarm controller thread
+int isAlarmTime(StateData *, AlarmData *);              //Check It's alarm time
+void *backlightThreadFunction(void *);                  //Backlight controller thread
+void timeKeepingMode(StateData *);                      //Enable timeKeepingMode
+void timeKeepingSet(StateData *);                       //Enable timeKeepingSet
+void timeKeepingUnitChange(StateData *);                //Trigger timeKeeping unit change
+void stopWatchMode(StateData *);                        //Enable stopWatchMode
+void stopWatchLaptime(StateData *);                     //Trigger stop watch laptime
+void stopWatchRun(StateData *);                         //Enable stop watch Run
+void stopWatchPause(StateData *);                       //Enable stop watch Pause
+void alarmMode(StateData *);                            //Enable alarmMode
+void alarmSetMode(StateData *);                         //Enable alarmSetMode
+void alarmIndicator(AlarmData *);                       //ON&OFF alarm indicator
+void addValue(StateData *, AlarmData *);                //Add value of targeted unit
+void selectionSort(char *);                             //For button processing
+int getMaxIdx(char *, int);                             //Get max index of processed button for selection sort
+int getButtonLength(char *);                            //Get processed button length
+void gotoxy(int, int);                                  //Gotoxy
+void textcolor(int, int);                               //For text color(backlight)
+void modeChangePrint();                                 //Initialize console when mode changed
+void printUnderLine(StateData, AlarmData);              //Print underline for targeted time unit

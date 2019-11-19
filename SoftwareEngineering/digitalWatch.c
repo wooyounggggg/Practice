@@ -20,8 +20,8 @@ int main(void)
     int backlightThreadCounter = 0;
     int alarmThreadCounter = 0;
     int alarmState;
-    pass.alarm = &alarm;
     alarm.alarmState = &alarmState;
+    pass.alarm = &alarm;
     pass.backlightThreadBoundaryLine = &backlightThreadBoundaryLine;
     pass.alarmThreadBoundaryLine = &alarmThreadBoundaryLine;
     pass.mainBoundaryLine = &mainBoundaryLine;
@@ -34,12 +34,12 @@ int main(void)
     button.mainBoundaryLine = &mainBoundaryLine;
     mainBoundaryLine = UNLOCK;
     buttonThreadBoundaryLine = LOCK;
-    pthread_create(&buttonThread, NULL, &buttonThreadFunction, (void *)&button);
     setDefault(&state, &alarm);
+    pthread_create(&buttonThread, NULL, &buttonThreadFunction, (void *)&button);
     system("clear");
     while (1)
     {
-        if (isAlarmTime(&state, &alarm) && alarmThreadCounter == 0)
+        if (isAlarmTime(&state, &alarm) && alarmThreadCounter == 0 && state.innerMode != TIME_KEEPING_SET && state.innerMode != ALARM_SET)
         {
             alarmState = ON;
             pthread_create(&alarmThread, NULL, &alarmThreadFunction, (void *)&pass);
@@ -83,58 +83,4 @@ int main(void)
     pthread_join(alarmThread, NULL);
     pthread_join(buttonThread, NULL);
     return 0;
-}
-
-void *alarmThreadFunction(void *_pass) //Alarm controller thread. need to pass tm data
-{
-    PassingData *pass = (PassingData *)_pass;
-    int i;
-    *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) + 1;
-    for (i = 0; i < (5000 / ALARM_SLEEP); i++)
-    {
-        if (i % (1000 / ALARM_SLEEP / 2) == 0)
-            printf("\a\n");
-        Sleep(ALARM_SLEEP);
-        if (*(pass->alarm->alarmState) == OFF) /*error : pass->alarm->alarmState4*/
-        {
-            *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
-            break;
-        }
-    }
-    *(pass->alarmThreadCounter) = *(pass->alarmThreadCounter) - 1;
-}
-
-void *buttonThreadFunction(void *_buttonList)
-{
-    ButtonData *buttonList = _buttonList;
-    int buttonProcessed = 0;
-    while (1)
-    {
-        if (*(buttonList->mainBoundaryLine) == UNLOCK && buttonProcessed == 0)
-        {
-            // gotoxy(BUTTON_INPUT_X + 9, BUTTON_INPUT_Y);
-            // printf("            ");
-            // gotoxy(BUTTON_INPUT_X, BUTTON_INPUT_Y);
-            // printf("Button : ");
-            scanf("%s", buttonList->inputButton);
-            buttonProcess(buttonList->inputButton, buttonList->processedButton);
-            *(buttonList->buttonLength) = getButtonLength(buttonList->processedButton);
-            *(buttonList->buttonThreadBoundaryLine) = UNLOCK;
-            *(buttonList->mainBoundaryLine) == LOCK;
-            buttonProcessed = 1;
-        }
-        else if (*(buttonList->mainBoundaryLine) == CLEAR && *(buttonList->buttonThreadBoundaryLine) != CLEAR)
-        {
-            buttonInitialize(buttonList->processedButton, 0, PROCESSED_BUTTON_SIZE);
-
-            *(buttonList->mainBoundaryLine) = LOCK;
-            *(buttonList->buttonThreadBoundaryLine) = CLEAR;
-            buttonProcessed = 0;
-        }
-    }
-}
-
-int isAlarmTime(StateData *state, AlarmData *alarm)
-{
-    return (alarm->alarmIndicator && alarm->hour == state->currentTime.hour && alarm->min == state->currentTime.min && state->currentTime.sec == 0);
 }
