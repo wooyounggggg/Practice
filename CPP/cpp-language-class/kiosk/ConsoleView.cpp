@@ -94,21 +94,6 @@ int ConsoleView::userUI0() { // 초기화면 & 카테고리 선택 & 카트 삭제 & 결제
 		pay(); // 결제 버튼 그리기(UI)
 
 		cout << " * 관리자 모드(@)" << endl;
-
-		// 디버깅용 코드 : 판매한 카트 조회 
-		if (data->getSoldCartList().size() != 0) {
-			cout << "-----------------------디버깅용 출력----------------------" << endl;
-			for (size_t i = 0; i < data->getSoldCartList().size(); i++)
-			{
-				cout << "< Cart " << i << " >" << endl;
-				print_all_elements(data->getSoldCartList().at(i));
-				cout << endl;
-			}
-			cout << "현재 매출액 : " << data->get_total_sales() << "원" << endl;
-			cout << "-----------------------디버깅용 출력----------------------" << endl;
-		}
-		// 디버깅용 코드 : 판매한 카트 조회 
-
 		cout << "\n - 입력 : ";
 		inputs(); // 키보드 입력 받기
 
@@ -445,7 +430,6 @@ int ConsoleView::userUI6() { // 매장-포장 & 최종 결제
 			else *(data->get_to_go()) += 1; // 포장 주문 횟수 증가 
 			for (int i = 0; i < data->getCartList().size(); i++) { // 팔린 카트리스트 접근 
 				for (int j = 0; j < data->getCartList().at(i).size(); j++) { // 카트리스트의 카트 접근
-
 					fm->setTime("sold_list.txt");   // @ 
 					fm->write("sold_list.txt","/");
 					fm->write("sold_list.txt",data->getCartList().at(i).at(j).getName());  //@
@@ -457,14 +441,10 @@ int ConsoleView::userUI6() { // 매장-포장 & 최종 결제
 						fm->modifyStock("material.txt", 
 							data->getCartList().at(i).at(j).getMaterialList().at(k).getName(), 
 							data->getCartList().at(i).at(j).getMaterialList().at(k).decreaseStock(1)); // 접근한 재료들 감소 
-						/*우영*/
 						//cout << data->getCartList().at(i).at(j).getMaterialList().at(k).getName() << data->getCartList().at(i).at(j).getMaterialList().at(k).getStock() << endl;
-							
-
 					}
 					fm->write("sold_list.txt", "\n");  //@
 				}
-				data->getSoldCartList().push_back(data->getCartList().at(i)); // 팔린 카트 리스트에 팔린 카트들 저장 
 			}
 			/*우영*/
 			data->sales_update();
@@ -517,6 +497,7 @@ int ConsoleView::adminUI0() {
 
 int ConsoleView::adminUI1() { // 신제품 추가
 	while (1) {
+		string fileName;
 		cout << "* 뒤로가기(0)\n" << endl;
 		cout << "□ 신제품 추가 □" << endl;
 		cout << " 1. 버거" << endl;
@@ -533,10 +514,22 @@ int ConsoleView::adminUI1() { // 신제품 추가
 		}
 
 		vector<Product>* selected_category = data->getCategoryArray()[0]; // 초기화 (아무거나로)
-		if (input == '1') selected_category = data->getCategoryArray()[0]; // 버거 
-		else if (input == '2') selected_category = data->getCategoryArray()[1]; // 사이드 
-		else if (input == '3') selected_category = data->getCategoryArray()[2]; // 디저트 
-		else if (input == '4') selected_category = data->getCategoryArray()[3]; // 음료 
+		if (input == '1') { 
+			selected_category = data->getCategoryArray()[0]; 
+			fileName = "product_burger.txt";
+		}// 버거 
+		else if (input == '2') { 
+			selected_category = data->getCategoryArray()[1]; 
+			fileName = "product_side.txt";
+		} // 사이드 
+		else if (input == '3') { 
+			selected_category = data->getCategoryArray()[2]; 
+			fileName = "product_dessert.txt";
+		}// 디저트 
+		else if (input == '4') {
+			selected_category = data->getCategoryArray()[3]; 
+			fileName = "product_drink.txt";
+		}// 음료 
 
 		cout << " - 제품 목록 -" << endl;
 		for (unsigned int i = 0; i < selected_category->size(); i++) // 선택한 카테고리 목록 출력
@@ -568,12 +561,14 @@ int ConsoleView::adminUI1() { // 신제품 추가
 		while (getline(ss, token, ' ')) { // tokening
 			material_indices.push_back(atoi(token.c_str()) - 1);
 		}
-
+		int* materialNumList = new int(material_indices.size());
 		vector<Material> materials_for_new;
 		for (unsigned int i = 0; i < material_indices.size(); i++) // 신제품을 구성할 재료 목록을 벡터에 채우기
 		{
 			materials_for_new.push_back(data->getMaterialCategory()->at(material_indices.at(i)));
+			materialNumList[i] = material_indices.at(i)+1;
 		}
+		fm->addProduct(fileName, product_name, materialNumList, material_indices.size());
 		selected_category->push_back(Product(product_name, materials_for_new)); // 신제품을 해당 카테고리에 추가 
 
 		console_clear();
@@ -636,7 +631,8 @@ int ConsoleView::adminUI2() { // 기존 제품 삭제
 			set = atoi(toss);
 
 			if (input >= '1' && input <= '1' + selected_category->size() - 1) {
-				/*fm->deleteProduct(fileName, selected_category->begin() + set - 1));*/
+				/*우영*/
+				fm->deleteProduct(fileName, selected_category->at(input-'1').getName());
 				selected_category->erase(selected_category->begin() + set - 1);
 
 				break; 
@@ -670,6 +666,7 @@ int ConsoleView::adminUI3() { // 재료 재고 입력
 			cin >> stock;
 			cin.clear();
 			cin.ignore(1, '\n');
+			fm->modifyStock("material.txt", materialCategory->at(num - 1).getName(), materialCategory->at(num - 1).getStock() + stock);
 			materialCategory->at(num - 1).increaseStock(stock); // 재고 추가
 			console_clear();
 		}

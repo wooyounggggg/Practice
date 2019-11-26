@@ -5,6 +5,16 @@ void FileManager::open(string fileName) {
 }
 
 /*우영*/
+void FileManager::addProduct(string fileName, string itemName, int* materialList, int size)
+{
+	reader.open(fileName, ios::app);
+	string fileInput = "\n"+itemName;
+	int i;
+	for (i = 0; i < size; i++)
+		fileInput += "_" + to_string(materialList[i]);
+	write(fileName, fileInput);
+	close();
+}
 void FileManager::deleteProduct(string fileName, string deletedContent)
 {
 	int contentLineNum = findContentLine(fileName, deletedContent); //지우기 원하는 content의 lineNum을 contentLineNum에 저장
@@ -29,6 +39,41 @@ void FileManager::deleteProduct(string fileName, string deletedContent)
 		writeLine += '\n';
 	}
 	getline(reader, tempLine);
+	for (i = contentLineNum; i < fileLineNum; i++)
+	{
+		getline(reader, tempLine);
+		writeLine += tempLine;
+		if (i != fileLineNum - 1)
+			writeLine += '\n';
+	}
+	reader.close();
+	ofstream writeFile(fileName, ios::trunc);
+	writeFile << writeLine;
+}
+void FileManager::modifyPrice(string fileName, string content, int modifiedPrice)
+{
+	int contentLineNum = findContentLine(fileName, content); //바꾸기 원하는 content의 lineNum을 contentLineNum에 저장
+	int fileLineNum = countLines(fileName); //file의 lineNum
+	int i;
+	string writeLine = ""; //writeLine : 수정된 파일 내용을 담을 string
+	string* targetLine = tokenize(fileName, contentLineNum, 5); //수정되는 line을 tokenize하여 저장하는 객체
+	string tempLine; //파일을 tempLine에 한줄씩 담아 writeLine에 옮김
+	size_t pos;
+	targetLine[2] = to_string(modifiedPrice);
+	open(fileName);
+	if (contentLineNum == -1)
+	{
+		close();
+		return;
+	}
+	for (i = 0; i < contentLineNum - 1; i++)
+	{
+		getline(reader, tempLine);
+		writeLine += tempLine;
+		writeLine += '\n';
+	}
+	getline(reader, tempLine);
+	writeLine += targetLine[0] + "_" + targetLine[1] + "_" + targetLine[2] + "_" + targetLine[3] + "\n";
 	for (i = contentLineNum; i < fileLineNum; i++)
 	{
 		getline(reader, tempLine);

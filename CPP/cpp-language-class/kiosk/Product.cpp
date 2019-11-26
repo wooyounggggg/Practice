@@ -38,7 +38,8 @@ vector<Material> Product::getMaterialList()
 }
 int Product::getPrice()
 {
-	return renewProduct();
+	/*¿ì¿µ*/
+	return *this->price;
 }
 
 int Product::getKcal()
