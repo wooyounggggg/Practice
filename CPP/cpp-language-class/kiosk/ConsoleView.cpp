@@ -415,7 +415,6 @@ int ConsoleView::userUI5() { // 카트 확인
 		else if (input == '0') return 0; // 뒤로 가기
 	}
 }
-
 int ConsoleView::userUI6() { // 매장-포장 & 최종 결제
 	while (1) {
 		cout << "* 뒤로가기(0)\n" << endl;
@@ -454,7 +453,11 @@ int ConsoleView::userUI6() { // 매장-포장 & 최종 결제
 					fm->write("sold_list.txt",to_string(data->getCartList().at(i).at(j).getPrice()));  //@
 
 					for (int k = 0; k < data->getCartList().at(i).at(j).getMaterialList().size(); k++) { //카트의 제품 접근 
-						data->getCartList().at(i).at(j).getMaterialList().at(k).decreaseStock(1); // 접근한 재료들 감소 
+						/*우영*/
+						fm->modifyStock("material.txt", 
+							data->getCartList().at(i).at(j).getMaterialList().at(k).getName(), 
+							data->getCartList().at(i).at(j).getMaterialList().at(k).decreaseStock(1)); // 접근한 재료들 감소 
+						/*우영*/
 						//cout << data->getCartList().at(i).at(j).getMaterialList().at(k).getName() << data->getCartList().at(i).at(j).getMaterialList().at(k).getStock() << endl;
 							
 
@@ -463,6 +466,8 @@ int ConsoleView::userUI6() { // 매장-포장 & 최종 결제
 				}
 				data->getSoldCartList().push_back(data->getCartList().at(i)); // 팔린 카트 리스트에 팔린 카트들 저장 
 			}
+			/*우영*/
+			data->sales_update();
 			data->getCartList().clear(); // 결제 후 카트리스트 비우기 
 			return 0; // page 0으로 이동
 		}
@@ -576,6 +581,7 @@ int ConsoleView::adminUI1() { // 신제품 추가
 }
 
 int ConsoleView::adminUI2() { // 기존 제품 삭제
+	string fileName;
 	while (1) {
 		cout << "* 뒤로가기(0)\n" << endl;
 		cout << "□ 기존 제품 삭제 □" << endl;
@@ -597,10 +603,22 @@ int ConsoleView::adminUI2() { // 기존 제품 삭제
 		}
 
 		vector<Product>* selected_category = data->getCategoryArray()[0]; // 초기화 (아무거나)
-		if (input == '1') selected_category = data->getCategoryArray()[0]; // 버거 
-		else if (input == '2') selected_category = data->getCategoryArray()[1]; // 사이드 
-		else if (input == '3') selected_category = data->getCategoryArray()[2]; // 디저트 
-		else if (input == '4') selected_category = data->getCategoryArray()[3]; // 음료 
+		if (input == '1') { 
+			selected_category = data->getCategoryArray()[0]; 
+			fileName = "product_burger.txt";
+		} // 버거
+		else if (input == '2') { 
+			selected_category = data->getCategoryArray()[1]; 
+			fileName = "product_side.txt"; 
+		} // 사이드 
+		else if (input == '3') { 
+			selected_category = data->getCategoryArray()[2]; 
+			fileName = "product_dessert.txt"; 
+		} // 디저트 
+		else if (input == '4') {
+			selected_category = data->getCategoryArray()[3];
+			fileName = "product_drink.txt";
+		}// 음료 
 
 		for (unsigned int i = 0; i < selected_category->size(); i++) // 제품 목록 출력
 		{
@@ -618,9 +636,11 @@ int ConsoleView::adminUI2() { // 기존 제품 삭제
 			set = atoi(toss);
 
 			if (input >= '1' && input <= '1' + selected_category->size() - 1) {
+				/*fm->deleteProduct(fileName, selected_category->begin() + set - 1));*/
 				selected_category->erase(selected_category->begin() + set - 1);
 
-				break; } // 선택지에 있는 번호를 입력해야, break
+				break; 
+			} // 선택지에 있는 번호를 입력해야, break
 			gotoxy(0, 12 + selected_category->size());
 			line_clear();
 		}

@@ -12,6 +12,9 @@ private:
 
 public:
 	void open(string fileName);
+	void deleteProduct(string fileName, string content);
+	void modifyStock(string fileName, string content, int modifiedContent);
+	int findContentLine(string fileName, string content);
 	void write(string fileName, string content);
 	void close();
 	int countLines(string fileName);

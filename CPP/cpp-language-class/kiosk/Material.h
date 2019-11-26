@@ -22,7 +22,7 @@ public:
 	string getName();
 	int getPrice();
 	int getKcal();
-	void increaseStock(int stock);
+	int increaseStock(int stock);
 	void increasePrice(int price);
-	void decreaseStock(int stock);
+	int decreaseStock(int stock);
 };

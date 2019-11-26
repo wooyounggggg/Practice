@@ -41,13 +41,17 @@ int Material::getKcal()
 {
 	return this->kcal;
 }
-void Material::increaseStock(int stock) {
+/*우영*/
+int Material::increaseStock(int stock) {
 	*this->stock += stock;
+	return *this->stock;
 }
 void Material::increasePrice(int price) {
 	*this->price += price;
 }
 
-void Material::decreaseStock(int stock) {
+int Material::decreaseStock(int stock) {
 	*this->stock -= stock;
+	return *this->stock;
 }
+/*우영*/
