@@ -1,28 +1,58 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#define MAX_SIZE 10000
+#include <sys/wait.h>
+#include <sys/types.h>
+#define MAX_SIZE 9999
 int main(int argc, char *argv[])
 {
 
     int processNum;
+    int processNumChecker;
     int interval;
-    int* numOfRange;
-    if(argc == 1)
+    int *intervalArray;
+    int numOfInterval;
+    int i;
+    pid_t pid;
+    pid_t rootPid = getpid();
+    FILE *fp;
+
+    if (argc == 1)
     {
         printf("Error : There's no input!\n");
         exit(1);
     }
-    FILE* fp;
-    processNum = *argv[1]-'0';
-    interval = *argv[2]-'0';
-    numOfRange = (int*)malloc(sizeof(int) * MAX_SIZE / interval);
-    const char* fileName = argv[3];
-    if((fp = fopen(fileName, "r")) == NULL)
+    processNum = atoi(argv[1]);
+    interval = atoi(argv[2]);
+    numOfInterval = MAX_SIZE / interval + 1;
+    intervalArray = (int *)malloc(sizeof(int) * numOfInterval);
+    const char *fileName = argv[3];
+    if ((fp = fopen(fileName, "r")) == NULL)
     {
         printf("file open failed\n");
         exit(1);
     }
-    fclose(fp);    
+    printf("pNum : %d checker : %d\n", processNum, processNumChecker);
+    for (processNumChecker = 1; processNumChecker * 2 <= processNum; processNumChecker *= 2)
+    {
+        pid = fork();
+        if (getpid() == rootPid)
+            printf("%d\n", processNumChecker);
+    }
+    if (getpid() == rootPid)
+        for (i = 0; i < processNum - processNumChecker; i++)
+            fork();
+    printf("%d\n", processNumChecker);
+    free(intervalArray);
+    fclose(fp);
+    pid = getpid();
+    if (pid == rootPid)
+    {
+        // processNumChecker = wait(NULL);
+        printf("%d process end\n", processNumChecker);
+        while (1)
+        {
+        }
+    }
     return 0;
 }
