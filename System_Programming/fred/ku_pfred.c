@@ -36,17 +36,17 @@ int main(int argc, char *argv[])
     for (processNumChecker = 1; processNumChecker * 2 <= processNum; processNumChecker *= 2)
     {
         pid = fork();
-        if (getpid() == rootPid)
+        if (pid != 0)
             printf("%d\n", processNumChecker);
     }
     if (getpid() == rootPid)
         for (i = 0; i < processNum - processNumChecker; i++)
             fork();
-    printf("%d\n", processNumChecker);
+    // printf("%d\n", processNumChecker);
     free(intervalArray);
     fclose(fp);
-    pid = getpid();
-    if (pid == rootPid)
+    // pid = getpid();
+    if (pid != 0)
     {
         // processNumChecker = wait(NULL);
         printf("%d process end\n", processNumChecker);
