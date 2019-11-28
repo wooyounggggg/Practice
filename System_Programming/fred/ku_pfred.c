@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <windows.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -16,6 +17,7 @@ int main(int argc, char *argv[])
     pid_t pid;
     pid_t rootPid = getpid();
     FILE *fp;
+    const char *fileName = argv[3];
 
     if (argc == 1)
     {
@@ -26,33 +28,22 @@ int main(int argc, char *argv[])
     interval = atoi(argv[2]);
     numOfInterval = MAX_SIZE / interval + 1;
     intervalArray = (int *)malloc(sizeof(int) * numOfInterval);
-    const char *fileName = argv[3];
     if ((fp = fopen(fileName, "r")) == NULL)
     {
         printf("file open failed\n");
         exit(1);
     }
-    printf("pNum : %d checker : %d\n", processNum, processNumChecker);
-    for (processNumChecker = 1; processNumChecker * 2 <= processNum; processNumChecker *= 2)
-    {
-        pid = fork();
-        if (pid != 0)
-            printf("%d\n", processNumChecker);
-    }
-    if (getpid() == rootPid)
-        for (i = 0; i < processNum - processNumChecker; i++)
-            fork();
-    // printf("%d\n", processNumChecker);
+    for (processNumChecker = 0; processNumChecker < processNum; processNumChecker++)
+        if ((pid = fork()) == 0)
+            break;
+        else if (pid < 0)
+            perror("fork error\n");
+
     free(intervalArray);
     fclose(fp);
-    // pid = getpid();
     if (pid != 0)
-    {
-        // processNumChecker = wait(NULL);
-        printf("%d process end\n", processNumChecker);
-        while (1)
-        {
-        }
-    }
+        for (i = 0; i < processNum - 1; i++)
+            wait(NULL);
+
     return 0;
 }
