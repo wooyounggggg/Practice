@@ -10,15 +10,15 @@
 
 int getFirstLine(int, int *);
 int getLineByLineNum(int, int, int);
-// void recordIntervalArray(int *, int, int, int, int);
+void recordIntervalArray(int *, int, int, int);
 int main(int argc, char *argv[])
 {
-    int processNum;
+    int numOfProcess;
     int interval;
-    int processNumChecker;
+    int processNum;
     int *intervalArray;
     int arraySize;
-    int lineNum;
+    int numOfLine;
     int i;
     int fd;
     int processSize;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         printf("Error : need 4 inputs.\n");
         exit(1);
     }
-    processNum = atoi(argv[1]);
+    numOfProcess = atoi(argv[1]);
     interval = atoi(argv[2]);
     arraySize = MAX_SIZE / interval + 1;
     intervalArray = (int *)malloc(sizeof(int) * arraySize);
@@ -39,35 +39,31 @@ int main(int argc, char *argv[])
         printf("file open failed\n");
         exit(1);
     }
-    getFirstLine(fd, &lineNum);
-    // for (i = 0; i <= lineNum; i++)
-    //     printf("line %d : %d\n", i, getLineByLineNum(fd, i, lineNum));
-    for (processNumChecker = 0; processNumChecker < processNum; processNumChecker++)
+    getFirstLine(fd, &numOfLine);
+    for (processNum = 0; processNum < numOfProcess; processNum++)
         if ((pid = fork()) == 0)
             break;
         else if (pid < 0)
         {
             perror("fork error\n");
-            processNumChecker--;
+            processNum--;
         }
-    // printf("array size : %d\n", arraySize);
-    if (processNumChecker == processNum - 1)
-        processSize = (lineNum / processNum) + (lineNum % processNum);
-    else
-        processSize = lineNum / processNum;
-    intervalArray[0] = lineNum / processNum;
-    // if (pid == 0)
-    //     recordIntervalArray(intervalArray, arraySize, processSize, processNumChecker, processNum, fd);
-    free(intervalArray);
-    close(fd);
-    if (pid != 0)
-        for (i = 0; i < processNum; i++)
-            wait(NULL);
 
+    intervalArray[0] = fd;
+    // printf("%d\n", fd);
+    if (pid == 0)
+        recordIntervalArray(intervalArray, arraySize, processNum, numOfProcess);
+    free(intervalArray);
+    // close(fd);
+    if (pid != 0)
+    {
+        for (i = 0; i < numOfProcess; i++)
+            wait(NULL);
+    }
     return 0;
 }
 
-int getFirstLine(int fd, int *lineNum)
+int getFirstLine(int fd, int *numOfLine)
 {
     int offsetBytes = 0;
     char buf[100];
@@ -81,7 +77,7 @@ int getFirstLine(int fd, int *lineNum)
         }
         offsetBytes++;
     }
-    *lineNum = atoi(buf);
+    *numOfLine = atoi(buf);
     return offsetBytes;
 }
 
@@ -100,12 +96,25 @@ int getLineByLineNum(int fd, int lineNum, int maxNum)
     return tmpInt;
 }
 
-void recordIntervalArray(int *intervalArray, int arraySize, int processSize, int processNumChecker, int processNum, int fd)
+void recordIntervalArray(int *intervalArray, int arraySize, int processNum, int numOfProcess)
 {
     int i;
-    int offset = intervalArray[0];
+    int lineNum;
+    int offset;
+    int processSize;
     char tmp[20];
-    for (i = 0; i < arraySize; i++) //initialize
+    int fd /*= intervalArray[0]*/;
+    fd = open("dataset", O_RDONLY);
+    printf("%d\n", fd);
+    getFirstLine(fd, &lineNum);
+    offset = lineNum / numOfProcess;
+    if (processNum == numOfProcess - 1)
+        processSize = offset + (lineNum % numOfProcess);
+    else
+        processSize = offset;
+    for (i = 0; i < arraySize; i++) //initialize interval array
         intervalArray[i] = 0;
     for (i = 0; i < processSize; i++)
+    {
+    }
 }
