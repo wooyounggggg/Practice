@@ -11,6 +11,7 @@
 int getFirstLine(int, int *);
 int getLineByLineNum(int, int, int);
 void recordIntervalArray(int *, int, int, int);
+int decideInterval(int, int);
 int main(int argc, char *argv[])
 {
     int numOfProcess;
@@ -40,6 +41,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
     getFirstLine(fd, &numOfLine);
+    // for(i=1;i<=numOfLine;i++)
+    // {
+    //     printf("Line %d : %d\n",i,getLineByLineNum(fd,i, numOfLine));
+    // }
     for (processNum = 0; processNum < numOfProcess; processNum++)
         if ((pid = fork()) == 0)
             break;
@@ -52,7 +57,11 @@ int main(int argc, char *argv[])
     intervalArray[0] = fd;
     // printf("%d\n", fd);
     if (pid == 0)
+    { 
         recordIntervalArray(intervalArray, arraySize, processNum, numOfProcess);
+        // for(i=0;i<arraySize;i++)
+        //     printf("%d\n",intervalArray[i]);
+    }
     free(intervalArray);
     // close(fd);
     if (pid != 0)
@@ -81,16 +90,17 @@ int getFirstLine(int fd, int *numOfLine)
     return offsetBytes;
 }
 
-int getLineByLineNum(int fd, int lineNum, int maxNum)
+int getLineByLineNum(int fd, int lineNum, int maxLineNum)
 {
     char *tmp;
     int tmpInt;
     int firstLineBytes;
-    if (lineNum <= 0 || lineNum > maxNum)
+    if (lineNum <= 0 || lineNum > maxLineNum)
         return -1;
     tmp = (char *)malloc(sizeof(100));
     firstLineBytes = getFirstLine(fd, &tmpInt);
-    pread(fd, tmp, 5, firstLineBytes + 5 * (lineNum - 1));
+    if(pread(fd, tmp, 5, firstLineBytes + 5 * (lineNum - 1)) == -1)
+        return -1;
     tmpInt = atoi(tmp);
     free(tmp);
     return tmpInt;
@@ -102,19 +112,28 @@ void recordIntervalArray(int *intervalArray, int arraySize, int processNum, int 
     int lineNum;
     int offset;
     int processSize;
+    int maxLineNum;
     char tmp[20];
     int fd /*= intervalArray[0]*/;
     fd = open("dataset", O_RDONLY);
-    printf("%d\n", fd);
-    getFirstLine(fd, &lineNum);
-    offset = lineNum / numOfProcess;
+    getFirstLine(fd,&maxLineNum);
+    // printf("%d\n", fd);
+    offset = maxLineNum / numOfProcess;
     if (processNum == numOfProcess - 1)
-        processSize = offset + (lineNum % numOfProcess);
+        processSize = offset + (maxLineNum % numOfProcess);
     else
         processSize = offset;
     for (i = 0; i < arraySize; i++) //initialize interval array
         intervalArray[i] = 0;
+    // printf("processNum : %d, processSize : %d\n",processNum,processSize);
     for (i = 0; i < processSize; i++)
-    {
-    }
+        getLineByLineNum(fd, offset * processNum + i + 1, maxLineNum);
+        // printf("process %d - line %d:%d\n", processNum+1, offset * processNum + i + 1, getLineByLineNum(fd, offset * processNum + i + 1, maxLineNum));
+        // getLineByLineNum(fd, offset * processNum+i, );
+    // printf("processSize %d offset %d lineNum %d maxLineNum %d\n",processSize, offset, lineNum, maxLineNum);
+}
+
+int decideInterval(int num, int interval)
+{
+
 }
