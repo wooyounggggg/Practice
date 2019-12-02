@@ -14,7 +14,7 @@
 
 int getFirstLine(int, int *);
 int getValueByLineNum(int, int, int);
-void recordIntervalArray(int *, int, int, int);
+void recordIntervalArray(int *, int, int, int, const char *);
 int decideArrayIndex(int, int);
 void printIntervalArray(int *, int, int);
 void sendMsg(int *, int, int);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     if (pid == 0)
     {
         intervalArray[0] = interval;
-        recordIntervalArray(intervalArray, arrayLength, processNum, numOfProcesses);
+        recordIntervalArray(intervalArray, arrayLength, processNum, numOfProcesses, fileName);
     }
     else
     {
@@ -109,7 +109,7 @@ int getValueByLineNum(int fd, int lineNum, int maxLineNum)
     return tmpInt;
 }
 
-void recordIntervalArray(int *intervalArray, int arrayLength, int processNum, int numOfProcesses)
+void recordIntervalArray(int *intervalArray, int arrayLength, int processNum, int numOfProcesses, const char *fileName)
 {
     int i;
     int lineNum;
@@ -119,7 +119,7 @@ void recordIntervalArray(int *intervalArray, int arrayLength, int processNum, in
     const int interval = intervalArray[0];
     char tmp[20];
     int fd;
-    fd = open("dataset", O_RDONLY);
+    fd = open(fileName, O_RDONLY);
     getFirstLine(fd, &maxLineNum);
     if (!(offset = maxLineNum / numOfProcesses)) //if the number of processes >= the number of value in file, each process' process 1 line with offset 1
     {
