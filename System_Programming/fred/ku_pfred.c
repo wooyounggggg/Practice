@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <windows.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -70,7 +69,11 @@ int main(int argc, char *argv[])
         numOfProcesses = numOfProcesses < maxLineNum ? numOfProcesses : maxLineNum;
         processSentMsg(intervalArray, arrayLength, numOfProcesses);
         for (i = 0; i < arrayLength; i++)
+        {
             printf("%d\n", intervalArray[i]);
+            sum += intervalArray[i];
+        }
+        // printf("sum:%d\n", sum);
     }
     free(intervalArray);
     return 0;
@@ -119,7 +122,11 @@ void recordIntervalArray(int *intervalArray, int arrayLength, int processNum, in
     const int interval = intervalArray[0];
     char tmp[20];
     int fd;
-    fd = open(fileName, O_RDONLY);
+    if ((fd = open(fileName, O_RDONLY)) < 0)
+    {
+        printf("file open failed\n");
+        exit(1);
+    }
     getFirstLine(fd, &maxLineNum);
     if (!(offset = maxLineNum / numOfProcesses)) //if the number of processes >= the number of value in file, each process' process 1 line with offset 1
     {
