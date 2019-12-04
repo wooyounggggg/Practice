@@ -32,24 +32,17 @@ void recordIntervalArray(int *, int, int, int, int, int);
 int main(int argc, char *argv[])
 {
     PassingData pass;
-    // int numOfThreads = atoi(argv[1]);
-    // int interval;
-    // int threadNum = 0;
-    // int *intervalArray;
-    // int arrayLength;
     int sum = 0;
     int maxLineNum;
     int i;
     int fd;
     int processSize;
     pthread_t threadArray[atoi(argv[1])];
-    // const char *fileName = argv[3];
     if (argc <= 1)
     {
         printf("Error : need 4 inputs.\n");
         exit(1);
     }
-    /* passing data initialize */
     pass.interval = atoi(argv[2]);
     pass.arrayLength = MAX_SIZE / pass.interval + 1;
     if ((pass.fd = open(argv[3], O_RDONLY)) < 0)
@@ -63,11 +56,6 @@ int main(int argc, char *argv[])
     pass.threadNumSynchronizer = MAIN;
     for (i = 0; i < pass.arrayLength; i++)
         pass.intervalArray[i] = 0;
-    /* passing data initialize */
-
-    // numOfThreads = atoi(argv[1]);
-    // arrayLength = MAX_SIZE / interval + 1;
-    // intervalArray = (int *)malloc(sizeof(int) * arrayLength);
     if ((fd = open(argv[3], O_RDONLY)) < 0)
     {
         printf("file open failed\n");
@@ -88,12 +76,9 @@ int main(int argc, char *argv[])
     for (i = 0; i < pass.numOfThreads; i++)
         pthread_join(threadArray[i], NULL);
     for (i = 0; i < pass.arrayLength; i++)
-    {
         printf("%d\n", pass.intervalArray[i]);
-        sum += pass.intervalArray[i];
-    }
+
     free(pass.intervalArray);
-    // printf("sum:%d\n", sum);
     return 0;
 }
 void *threadProcedure(void *_pass)
@@ -102,7 +87,6 @@ void *threadProcedure(void *_pass)
     int threadNum;
     int fd = pass->fd;
     int maxLineNum;
-    // int taskDone = 0;
     getFirstLine(fd, &maxLineNum);
     while (1)
     {
@@ -118,9 +102,7 @@ void *threadProcedure(void *_pass)
         if (pthread_mutex_trylock(&mutex) == 0)
         {
             recordIntervalArray(pass->intervalArray, pass->arrayLength, threadNum, pass->numOfThreads, fd, pass->interval);
-            // printf("test\n");
             pthread_mutex_unlock(&mutex);
-            // taskDone = 1;
             return 0;
         }
     }
@@ -146,10 +128,8 @@ void recordIntervalArray(int *intervalArray, int arrayLength, int threadNum, int
         processSize = offset;
     if (threadNum < maxLineNum) // if the number of processes is over maxLineNum, 1~maxLineNum threads process file and other processes(maxLineNum+1~) do nothing.
     {
-        // printf("%d\n", getValueByLineNum(fd, offset * threadNum + i + 1, maxLineNum), interval);
         for (i = 0; i < processSize; i++)
             intervalArray[decideArrayIndex(getValueByLineNum(fd, offset * threadNum + i + 1, maxLineNum), interval)]++;
-        // printf("%d\n", decideArrayIndex(getValueByLineNum(fd, offset * threadNum + i + 1, maxLineNum), interval));
     }
 }
 int getFirstLine(int fd, int *numOfLine)
