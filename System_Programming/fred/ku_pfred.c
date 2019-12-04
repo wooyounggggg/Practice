@@ -73,7 +73,6 @@ int main(int argc, char *argv[])
             printf("%d\n", intervalArray[i]);
             sum += intervalArray[i];
         }
-        // printf("sum:%d\n", sum);
     }
     free(intervalArray);
     return 0;
@@ -159,21 +158,64 @@ int decideArrayIndex(int num, int interval)
     return num / interval;
 }
 
+// void sendMsg(int *intervalArray, int arrayLength, int numOfProcesses)
+// {
+//     struct mq_attr attr;
+//     unsigned int prio = 0;
+//     mqd_t mqdes;
+//     int i;
+//     const int MESSAGE_PER_PROCESS = arrayLength > 2000 ? 5 : 1;
+//     int *divideArray[MESSAGE_PER_PROCESS];
+//     int dividedLength = arrayLength / MESSAGE_PER_PROCESS;
+//     for (i = 0; i < MESSAGE_PER_PROCESS; i++)
+//     {
+//         if (i == MESSAGE_PER_PROCESS - 1)
+//             dividedLength += arrayLength % MESSAGE_PER_PROCESS;
+//         divideArray[i] = (int *)malloc(sizeof(int) * dividedLength);
+//     }
+//     dividedLength -= arrayLength % MESSAGE_PER_PROCESS;
+//     attr.mq_maxmsg = numOfProcesses * MESSAGE_PER_PROCESS;
+//     attr.mq_msgsize = 8000; /*arrayLength * 4;*/
+//     if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY | O_NONBLOCK, 0666, &attr)) < 0)
+//     {
+//         perror("mq_open()");
+//         exit(0);
+//     }
+//     for (prio = 0; prio < MESSAGE_PER_PROCESS; prio++)
+//     {
+//         if (prio == MESSAGE_PER_PROCESS - 1)
+//             dividedLength += arrayLength % MESSAGE_PER_PROCESS;
+//         if (mq_send(mqdes, (char *)intervalArray, dividedLength, prio) == -1)
+//             perror("mq_send()");
+//     }
+
+//     mq_close(mqdes);
+// }
 void sendMsg(int *intervalArray, int arrayLength, int numOfProcesses)
 {
     struct mq_attr attr;
     unsigned int prio = 0;
+    const int MESSAGE_PER_PROCESS = arrayLength > 2000 ? 5 : 1;
+    int dividedLength = (arrayLength / MESSAGE_PER_PROCESS);
     mqd_t mqdes;
-    attr.mq_maxmsg = numOfProcesses;
-    attr.mq_msgsize = arrayLength * 4;
-    if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY | O_NONBLOCK, 0666, &attr)) < 0)
+    attr.mq_maxmsg = numOfProcesses * MESSAGE_PER_PROCESS;
+    attr.mq_msgsize = (dividedLength + arrayLength % MESSAGE_PER_PROCESS) * 4; /*8000*/
+    if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY, 0666, &attr)) < 0)
     {
         perror("mq_open()");
         exit(0);
     }
-    if (mq_send(mqdes, (char *)intervalArray, attr.mq_msgsize, prio) == -1)
-        perror("mq_send()");
-
+    for (prio = 0; prio < MESSAGE_PER_PROCESS; prio++)
+    {
+        if (prio == MESSAGE_PER_PROCESS - 1)
+            dividedLength += arrayLength % MESSAGE_PER_PROCESS;
+        // printf("prio : %d, dividedLength : %d\n", prio, dividedLength);
+        // printf("atrr msgsize : %d\n", attr.mq_msgsize);
+        // printf("prio : %d\n", prio);
+        // printf("arr len : %d\n", arrayLength);
+        if (mq_send(mqdes, (char *)(intervalArray + (arrayLength / MESSAGE_PER_PROCESS) * prio), dividedLength * 4, prio) == -1)
+            perror("mq_send()");
+    }
     mq_close(mqdes);
 }
 
@@ -182,10 +224,16 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
     struct mq_attr attr;
     int *receivedArray;
     unsigned int prio;
+    int sum[5] = {0};
     mqd_t mqdes;
     int i;
-    attr.mq_maxmsg = 1;
-    attr.mq_msgsize = arrayLength * 4;
+    const int MESSAGE_PER_PROCESS = arrayLength > 2000 ? 5 : 1;
+    int dividedLength = arrayLength / MESSAGE_PER_PROCESS;
+    // attr.mq_maxmsg = 1;
+    attr.mq_maxmsg = numOfProcesses * MESSAGE_PER_PROCESS;
+    attr.mq_msgsize = (dividedLength + arrayLength % MESSAGE_PER_PROCESS) * 4;
+    // attr.mq_msgsize = arrayLength * 4;
+    // printf("message per process : %d\n", MESSAGE_PER_PROCESS);
     receivedArray = (int *)malloc(sizeof(int) * attr.mq_msgsize);
     if ((mqdes = mq_open(NAME, O_RDWR | O_CREAT | O_NONBLOCK, 0666, &attr)) < 0)
     {
@@ -194,11 +242,32 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
     }
     for (i = 0; i < arrayLength; i++)
         intervalArray[i] = 0;
-    while (mq_receive(mqdes, (char *)receivedArray, attr.mq_msgsize, &prio) != -1)
+    // for (i = 0; i < attr.mq_msgsize; i++)
+    //     printf("r[%d] : %d\n", i, receivedArray[i]);
+    while (mq_receive(mqdes, (char *)receivedArray, (dividedLength + arrayLength % MESSAGE_PER_PROCESS) * 4, &prio) != -1)
     {
         mq_getattr(mqdes, &attr);
-        for (i = 0; i < arrayLength; i++)
-            intervalArray[i] += receivedArray[i];
+        if (MESSAGE_PER_PROCESS == 5)
+        {
+            // printf("test\n");
+            for (i = 0; i < dividedLength + (prio == 4) * (arrayLength % MESSAGE_PER_PROCESS); i++)
+            {
+                // printf("prio : %d, r[%d] : %d\n", prio, i, receivedArray[i]);
+                intervalArray[prio * dividedLength + i] += receivedArray[i];
+                sum[prio] += receivedArray[i];
+                // if (prio == 4)
+                // printf("rec[%d] = %d\n", i, receivedArray[i]);
+                // printf("prio : %d, idx : %d\n", prio, prio * dividedLength + i);
+
+                // printf("prio : %d, receivedArray[%d] = %d\n", prio, i, receivedArray[i]);
+            }
+            // printf("sum[%d]:%d\n", prio, sum[prio]);
+
+            // printf("\n");
+        }
+        else
+            for (i = 0; i < arrayLength; i++)
+                intervalArray[i] += receivedArray[i];
     }
 
     mq_close(mqdes);
