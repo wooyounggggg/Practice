@@ -24,7 +24,6 @@ int processSentMsg(int *, int, int);
 void makeFileName(char *, int);
 int getLengthSize(int);
 int allMessageQueueChecked(int *, int);
-// void mergeArray(int *, int *, int, int);
 int main(int argc, char *argv[])
 {
     int numOfProcesses;
@@ -78,11 +77,7 @@ int main(int argc, char *argv[])
         for (i = 0; i < numOfProcesses; i++)
             wait(NULL);
         for (i = 0; i < arrayLength; i++)
-        {
-            // printf("%d\n", intervalArray[i]);
-            sum += intervalArray[i];
-        }
-        printf("sum : %d\n", sum);
+            printf("%d\n", intervalArray[i]);
     }
     free(intervalArray);
     return 0;
@@ -215,11 +210,8 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
     messageCheck = (int *)malloc(sizeof(int) * numOfProcesses);
     for (j = 0; j < MESSAGE_COUNT_PER_PROCESS; j++)
         messageCheck[j] = 0;
-    //메시지 큐 차례로 열기
     while (!allMessageQueueChecked(messageCheck, numOfProcesses))
     {
-        //queue open
-        // printf("before allMessageQueueChecked : %d\n", allMessageQueueChecked(messageCheck, numOfProcesses));
         makeFileName(msgQueueFileName, i);
         if (messageCheck[i] == CHECK || (mqdes = mq_open(msgQueueFileName, O_RDWR | O_NONBLOCK, 0666, &attr)) < 0)
         {
@@ -228,76 +220,33 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
             i = (i + 1) % numOfProcesses;
             continue;
         }
-        // printf("before messageCheck[%d] : %d\n", i, messageCheck[i]);
-        // printf("mqueue %d\n", i);
-        //메시지 큐 하나에서 메시지 받기
         for (j = 0; j < MESSAGE_COUNT_PER_PROCESS; j++)
         {
-            // if (j == MESSAGE_COUNT_PER_PROCESS - 1)
-            //     dividedLength += restLength;
-
             if (mq_receive(mqdes, (char *)receivedArray, getLengthSize(attr.mq_msgsize), &prio) == -1)
             {
-                // if (j == MESSAGE_COUNT_PER_PROCESS - 1)
-                //     dividedLength -= restLength;
                 j--;
                 continue;
             }
             if (prio == MESSAGE_COUNT_PER_PROCESS - 1)
                 dividedLength += restLength;
-            /* received Array를 interval array로 옮겨 담기 */
             if (MESSAGE_COUNT_PER_PROCESS == 5)
                 for (k = 0; k < dividedLength; k++)
-                {
-                    // printf("processNum : %d - %d\n", i, k);
-
-                    // printf("processNum : %d prio : %d, receivedArray[%d] : %d\n", i, prio, k, receivedArray[k]);
-                    // sum += receivedArray[k];
                     intervalArray[prio * (arrayLength / MESSAGE_COUNT_PER_PROCESS) + k] += receivedArray[k];
-                    // sum[prio] += receivedArray[i];
-                    // printf("sum : %d\n", sum);
-                }
             else
                 for (k = 0; k < arrayLength; k++)
-                {
                     intervalArray[k] += receivedArray[k];
-                    // sum[prio] += receivedArray[i];
-                }
-            /* received Array를 interval array로 옮겨 담기 */
             if (prio == MESSAGE_COUNT_PER_PROCESS - 1)
             {
                 dividedLength -= restLength;
                 messageCheck[i] = CHECK;
             }
         }
-        //
         mq_close(mqdes);
         if (messageCheck[i] == CHECK)
             mq_unlink(msgQueueFileName);
-        /**/
-        // printf("after messageCheck[%d] : %d\n\n", i, messageCheck[i]);
         i = (i + 1) % numOfProcesses;
-        // printf("after allMessageQueueChecked : %d\n\n", allMessageQueueChecked(messageCheck, numOfProcesses));
     }
-    // printf("test\n");
 }
-// void mergeArray(int *intervalArray, int *receivedArray, int MESSAGE_COUNT_PER_PROCESS, int prio, int dividedLength)
-// {
-//     if (MESSAGE_COUNT_PER_PROCESS == 5)
-//         for (i = 0; i < dividedLength + (prio == 4) * (arrayLength % MESSAGE_COUNT_PER_PROCESS); i++)
-//         {
-//             intervalArray[prio * dividedLength + i] += receivedArray[i];
-//             sum[prio] += receivedArray[i];
-//             printf("prio : %d : %d\n", prio, receivedArray[i]);
-//         }
-//     else
-//         for (i = 0; i < arrayLength; i++)
-//         {
-//             intervalArray[i] += receivedArray[i];
-//             sum[prio] += receivedArray[i];
-//             printf("prio : %d : %d\n", prio, receivedArray[i]);
-//         }
-// }
 
 int allMessageQueueChecked(int *messageCheck, int size)
 {
@@ -307,95 +256,3 @@ int allMessageQueueChecked(int *messageCheck, int size)
             return UNCHECK;
     return CHECK;
 }
-// void sendMsg(int *intervalArray, int arrayLength, int numOfProcesses)
-// {
-//     struct mq_attr attr;
-//     unsigned int prio = 0;
-//     const int MESSAGE_COUNT_PER_PROCESS = arrayLength > 2000 ? 5 : 1;
-//     int dividedLength = (arrayLength / MESSAGE_COUNT_PER_PROCESS);
-//     mqd_t mqdes;
-//     attr.mq_maxmsg = 10;
-//     attr.mq_msgsize = (dividedLength + arrayLength % MESSAGE_COUNT_PER_PROCESS) * 4;
-//     for (prio = 0; prio < MESSAGE_COUNT_PER_PROCESS; prio++)
-//     {
-//         if ((mqdes = mq_open(DEFAULT_NAME, O_CREAT | O_WRONLY, 0666, &attr)) < 0)
-//         {
-//             perror("mq_open()");
-//             exit(0);
-//         }
-//         if (prio == MESSAGE_COUNT_PER_PROCESS - 1)
-//             dividedLength += arrayLength % MESSAGE_COUNT_PER_PROCESS;
-//         if (mq_send(mqdes, (char *)(intervalArray + (arrayLength / MESSAGE_COUNT_PER_PROCESS) * prio), dividedLength * 4, prio) == -1)
-//         {
-//             if(errno==EAGAIN)
-//             {
-//                 if (prio == MESSAGE_COUNT_PER_PROCESS - 1)
-//                     dividedLength -= arrayLength % MESSAGE_COUNT_PER_PROCESS;
-//                 prio--;
-//                 mq_close(mqdes);
-//                 continue;
-//             } // perror("mq_send()");
-//         }
-//         mq_close(mqdes);
-//         // printf("send : %d\n", prio);
-//     }
-// }
-// }
-// printf("send success\n");
-
-/*
-int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
-{
-    struct mq_attr attr;
-    int *receivedArray;
-    unsigned int prio;
-    mqd_t mqdes;
-    int i, j;
-    const int MESSAGE_COUNT_PER_PROCESS = arrayLength > 2000 ? 5 : 1;
-    int dividedLength = arrayLength / MESSAGE_COUNT_PER_PROCESS;
-    attr.mq_maxmsg = 10;
-    attr.mq_msgsize = (dividedLength + arrayLength % MESSAGE_COUNT_PER_PROCESS) * 4;
-    receivedArray = (int *)malloc(sizeof(int) * attr.mq_msgsize);
-    for (i = 0; i < arrayLength; i++)
-        intervalArray[i] = 0;
-    for (j = 0; j < numOfProcesses * MESSAGE_COUNT_PER_PROCESS; j++)
-    {
-        for (i = 0; i < attr.mq_msgsize; i++)
-            receivedArray[i] = 0;
-        if ((mqdes = mq_open(DEFAULT_NAME, O_RDWR, 0666, &attr)) < 0)
-        {
-            perror("open()");
-            exit(0);
-        }
-        if (mq_receive(mqdes, (char *)receivedArray, (dividedLength + arrayLength % MESSAGE_COUNT_PER_PROCESS) * 4, &prio) != -1)
-        {
-            if (errno == EAGAIN)
-            {
-                j--;
-                mq_close(mqdes);
-                // printf("test2 : %d\n",i);
-                continue;
-            }
-            mq_getattr(mqdes, &attr);
-            if (MESSAGE_COUNT_PER_PROCESS == 5)
-                for (i = 0; i < dividedLength + (prio == 4) * (arrayLength % MESSAGE_COUNT_PER_PROCESS); i++)
-                {
-                    intervalArray[prio * dividedLength + i] += receivedArray[i];
-                    sum[prio] += receivedArray[i];
-                    printf("prio : %d : %d\n", prio, receivedArray[i]);
-                }
-            else
-                for (i = 0; i < arrayLength; i++)
-                {
-                    intervalArray[i] += receivedArray[i];
-                    sum[prio] += receivedArray[i];
-                    printf("prio : %d : %d\n", prio, receivedArray[i]);
-                }
-            printf("sum[%d] : %d\n", prio, sum[prio]);
-        }
-        mq_close(mqdes);
-    }
-    // printf("test2 : %d\n", j);
-    mq_unlink(DEFAULT_NAME);
-}
-*/
