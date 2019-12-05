@@ -161,7 +161,7 @@ void sendMsg(int *intervalArray, int arrayLength, int numOfProcesses)
     attr.mq_msgsize = (dividedLength + arrayLength % MESSAGE_PER_PROCESS) * 4;
     for (prio = 0; prio < MESSAGE_PER_PROCESS; prio++)
     {
-        if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY | O_NONBLOCK, 0666, &attr)) < 0)
+        if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY, 0666, &attr)) < 0)
         {
             perror("mq_open()");
             exit(0);
@@ -175,10 +175,12 @@ void sendMsg(int *intervalArray, int arrayLength, int numOfProcesses)
                 if (prio == MESSAGE_PER_PROCESS - 1)
                     dividedLength -= arrayLength % MESSAGE_PER_PROCESS;
                 prio--;
+                mq_close(mqdes);
                 continue;
             } // perror("mq_send()");
         }
         mq_close(mqdes);
+        // printf("send : %d\n", prio);
     }
 }
         // }
@@ -202,7 +204,9 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
         intervalArray[i] = 0;
     for(j = 0; j < numOfProcesses * MESSAGE_PER_PROCESS; j++)
     {
-        if ((mqdes = mq_open(NAME, O_RDWR | O_NONBLOCK, 0666, &attr)) < 0)
+        for(i=0; i < attr.mq_msgsize; i++)
+            receivedArray[i] = 0;
+        if ((mqdes = mq_open(NAME, O_RDWR, 0666, &attr)) < 0)
         {
             perror("open()");
             exit(0);
@@ -212,6 +216,7 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
             if(errno == EAGAIN)
             {
                 j--;
+                mq_close(mqdes);
                 // printf("test2 : %d\n",i);
                 continue;
             }
