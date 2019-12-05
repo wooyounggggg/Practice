@@ -159,21 +159,31 @@ void sendMsg(int *intervalArray, int arrayLength, int numOfProcesses)
     mqd_t mqdes;
     attr.mq_maxmsg = 10;
     attr.mq_msgsize = (dividedLength + arrayLength % MESSAGE_PER_PROCESS) * 4;
-    if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY, 0666, &attr)) < 0)
-    {
-        perror("mq_open()");
-        exit(0);
-    }
     for (prio = 0; prio < MESSAGE_PER_PROCESS; prio++)
     {
+        if ((mqdes = mq_open(NAME, O_CREAT | O_WRONLY | O_NONBLOCK, 0666, &attr)) < 0)
+        {
+            perror("mq_open()");
+            exit(0);
+        }
         if (prio == MESSAGE_PER_PROCESS - 1)
             dividedLength += arrayLength % MESSAGE_PER_PROCESS;
         if (mq_send(mqdes, (char *)(intervalArray + (arrayLength / MESSAGE_PER_PROCESS) * prio), dividedLength * 4, prio) == -1)
-            perror("mq_send()");
+        {
+            if(errno==EAGAIN)
+            {
+                if (prio == MESSAGE_PER_PROCESS - 1)
+                    dividedLength -= arrayLength % MESSAGE_PER_PROCESS;
+                prio--;
+                continue;
+            } // perror("mq_send()");
+        }
+        mq_close(mqdes);
     }
-    // printf("send success\n");
-    mq_close(mqdes);
 }
+        // }
+    // printf("send success\n");
+
 
 int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
 {
