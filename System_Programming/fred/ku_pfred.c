@@ -23,7 +23,7 @@ void sendMsg(int *, int, int, int);
 int processSentMsg(int *, int, int);
 void makeFileName(char *, int);
 int getLengthSize(int);
-int allMessageQueueChecked(int *, int);
+int allMessageQueueChecked(int *, int, int*);
 int main(int argc, char *argv[])
 {
     int numOfProcesses;
@@ -210,14 +210,12 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
     messageCheck = (int *)malloc(sizeof(int) * numOfProcesses);
     for (j = 0; j < MESSAGE_COUNT_PER_PROCESS; j++)
         messageCheck[j] = 0;
-    while (!allMessageQueueChecked(messageCheck, numOfProcesses))
+    while (!allMessageQueueChecked(messageCheck, numOfProcesses, &i))
     {
         makeFileName(msgQueueFileName, i);
-        if (messageCheck[i] == CHECK || (mqdes = mq_open(msgQueueFileName, O_RDWR | O_NONBLOCK, 0666, &attr)) < 0)
+        if ((mqdes = mq_open(msgQueueFileName, O_RDWR | O_NONBLOCK, 0666, &attr)) < 0)
         {
-            if (messageCheck[i] == UNCHECK)
-                mq_close(mqdes);
-            i = (i + 1) % numOfProcesses;
+            mq_close(mqdes);
             continue;
         }
         for (j = 0; j < MESSAGE_COUNT_PER_PROCESS; j++)
@@ -244,15 +242,17 @@ int processSentMsg(int *intervalArray, int arrayLength, int numOfProcesses)
         mq_close(mqdes);
         if (messageCheck[i] == CHECK)
             mq_unlink(msgQueueFileName);
-        i = (i + 1) % numOfProcesses;
     }
 }
 
-int allMessageQueueChecked(int *messageCheck, int size)
+int allMessageQueueChecked(int *messageCheck, int numOfProcesses, int *uncheckPoint)
 {
     int i;
-    for (i = 0; i < size; i++)
+    for (i = 0; i < numOfProcesses; i++)
         if (messageCheck[i] == UNCHECK)
+        {
+            *uncheckPoint = i;
             return UNCHECK;
+        }
     return CHECK;
 }
