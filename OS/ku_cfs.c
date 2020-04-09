@@ -1,29 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <string.h>
-#include <unistd.h>
-#define NUM_OF_NICE_GROUP 5
-typedef struct Process
-{
-    struct Process *next;
-    struct Process *prev;
-    double vruntime;
-    double niceValue;
-    pid_t pid;
-} Process;
+#include "ku_cfs.h"
 
-int addNextProcess(Process *);
-int initPCB(Process *);
-int sortPCB(Process *);
+ProcessStructure *increasePCB(ProcessStructure *);
+int setProcessStructure(ProcessStructure *);
+int sortPCB(ProcessStructure *);
 double niceValue[NUM_OF_NICE_GROUP] = {0.64, 0.8, 1, 1.25, 1.5625};
 /* 도식화 먼저 할 것 */
 int main(int argc, char *argv[])
 {
-    Process *PCB;
+    ProcessStructure *PCB;
     int i, j;
     pid_t pid;
     int ts = atoi(argv[6]); /* time slice */
+    char charParameter = 'A';
     int n[NUM_OF_NICE_GROUP] = {
         atoi(argv[1]),
         atoi(argv[2]),
@@ -38,8 +26,8 @@ int main(int argc, char *argv[])
         {
             if ((pid = fork()) == 0) /* if child */
             {
-                /* excute execl with parameter character */
-
+                /* excute execl with parameter character A ~ Z */
+                execl("./ku_app", &charParameter, &charParameter, NULL);
                 break;
             }
             else if (pid < 0) /* fork error */
@@ -47,15 +35,17 @@ int main(int argc, char *argv[])
                 perror("fork error\n");
                 return 1;
             }
-            else /* if ku_cfs scheduler(Parent), increase PCB of 1, save forked child's pid and vruntime to last PCB element*/
+            else /* if ku_cfs scheduler(Parent), increase PCB of 1, save forked child's pid, vruntime and niceValue to last PCB element*/
             {
-                /*
-                0. STOP child
-                1. sleep(5) 
-                2. increase PCB(make last PCB's next Process)
-                3. insert (pid -> Process's pid / vruntime -> Process's vruntime / niceValue -> Process's niceValue)
-                */
+                /* 0. STOP child -> in ku_app.c */
+
+                /* 1. sleep(5) */
+
+                /* 2. increase PCB(make last PCB's next Process) */
+
+                /* 3. insert (pid -> Process's pid / vruntime -> Process's vruntime / niceValue -> Process's niceValue) */
             }
+            charParameter++;
         }
         if (pid == 0)
             break;
@@ -63,17 +53,25 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int addNextProcess(Process *PCB)
+ProcessStructure *increasePCB(ProcessStructure *PCB)
 {
-    Process *tmp = PCB;
-    while (tmp->next != NULL)
+    ProcessStructure *tmp = PCB;
+    if (tmp == NULL) /* if PCB has no elements, init PCB */
+    {
+        if (!(tmp = (ProcessStructure *)malloc(sizeof(ProcessStructure))))
+            exit(0);
+        setProcessStructure(tmp);
+        return tmp;
+    }
+    while (tmp->next != NULL) /* else increase PCB */
         tmp = tmp->next;
+    if (!(tmp->next = (ProcessStructure *)malloc(sizeof(ProcessStructure))))
+        exit(0);
+    setProcessStructure(tmp->next);
+    return tmp->next;
 }
-
-int initPCB(Process *PCB)
-{
-}
-int sortPCB(Process *PCB)
+int setProcessStructure(ProcessStructure *PCB) {}
+int sortPCB(ProcessStructure *PCB)
 {
     int i;
 }
