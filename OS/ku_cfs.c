@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     int i, j;
     pid_t pid;
     int ts = atoi(argv[6]); /* time slice */
-    char charParameter = 'A';
+    char charParameter[2] = "A";
     int n[NUM_OF_NICE_GROUP] = {
         atoi(argv[1]),
         atoi(argv[2]),
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
             if ((pid = fork()) == 0) /* if child */
             {
                 /* excute execl with parameter character A ~ Z */
-                execl("./ku_app", &charParameter, &charParameter, NULL);
+                execl("./ku_app", charParameter, charParameter, NULL);
                 break;
             }
             else if (pid < 0) /* fork error */
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
                 /* 3. insert (pid -> Process's pid / vruntime -> Process's vruntime / niceValue -> Process's niceValue) */
             }
-            charParameter++;
+            charParameter[0]++;
         }
         if (pid == 0)
             break;
