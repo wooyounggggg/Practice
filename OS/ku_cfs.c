@@ -39,14 +39,14 @@ int main(int argc, char *argv[])
             {
                 /* 0. STOP child -> in ku_app.c */
 
-                /* 1. sleep(5) */
-
-                /* 2. increase PCB(make last PCB's next Process) */
-
-                /* 3. insert (pid -> Process's pid / vruntime -> Process's vruntime / niceValue -> Process's niceValue) */
+                /* 1. increase PCB(make last PCB's next Process) */
+                /* 2. insert (pid -> Process's pid / vruntime -> Process's vruntime / niceValue -> Process's niceValue) */
+                increasePCB(PCB);
             }
             charParameter[0]++;
         }
+        /* 1. sleep(5) */
+        sleep(5);
         if (pid == 0)
             break;
     }
@@ -68,6 +68,7 @@ ProcessStructure *increasePCB(ProcessStructure *PCB)
     if (!(tmp->next = (ProcessStructure *)malloc(sizeof(ProcessStructure))))
         exit(0);
     setProcessStructure(tmp->next);
+    sortPCB;
     return tmp->next;
 }
 int setProcessStructure(ProcessStructure *PCB) {}
