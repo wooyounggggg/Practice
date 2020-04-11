@@ -3,12 +3,12 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
-#define NUM_OF_NICE_GROUP 5
+#define MAX_NICE_INDEX 5
 typedef struct ProcessStructure
 {
     struct ProcessStructure *next;
     struct ProcessStructure *prev;
     double vruntime;
-    double niceValue;
+    int niceIndex;
     pid_t pid;
-} ProcessStructure;
+} PS;
