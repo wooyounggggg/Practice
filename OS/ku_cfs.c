@@ -1,16 +1,20 @@
 #include "ku_cfs.h"
 
-PS *increasePCB(const PS *, int, pid_t);
+void printPCB(PS *);
+PS *increasePCB(PS *, int, pid_t);
 int swapPS(PS *, PS *);
-PS *getMinPCB(const PS *);
+PS *getMinPS(PS *);
 pid_t schedulePCB(PS *);
-int initPS(PS *, int, pid_t);
+int setPS(PS *, PS *, PS *, int, pid_t);
 int renewPS(PS *);
 const double niceValue[MAX_NICE_INDEX] = {0.64, 0.8, 1, 1.25, 1.5625};
+
 /* 도식화 먼저 할 것 */
 int main(int argc, char *argv[])
 {
-    PS *PCB;
+    PS *PCB = (PS *)malloc(sizeof(PS));
+    PCB->next = NULL;
+    PCB->prev = NULL;
     int i, j;
     pid_t pid;
     int ts = atoi(argv[6]); /* time slice */
@@ -27,10 +31,9 @@ int main(int argc, char *argv[])
     {
         for (j = 0; j < n[i]; j++) /* make n[j] of processes */
         {
-            if ((pid = fork()) == 0) /* if child */
+            if ((pid = fork()) == 0) /* if child, */
             {
-                /* excute execl with parameter character A ~ Z */
-                execl("./ku_app", charParameter, charParameter, NULL);
+                execl("./ku_app", charParameter, charParameter, NULL); /* excute execl with parameter character A ~ Z */
                 break;
             }
             else if (pid < 0) /* fork error */
@@ -38,47 +41,99 @@ int main(int argc, char *argv[])
                 perror("fork error\n");
                 return 1;
             }
-            else /* if ku_cfs scheduler(Parent), increase PCB of 1, save forked child's pid, vruntime and niceValue to last PCB element*/
-            {
-                /* 1. increase PCB(make last PCB's next Process) */
-                /* 2. insert (pid -> Process's pid / vruntime -> Process's vruntime / niceValue -> Process's niceValue) */
-                increasePCB(PCB, i, pid);
-            }
+            else if (i == 0 && j == 0)          /* if Parent and First PCB elements, */
+                setPS(PCB, NULL, NULL, i, pid); /* just set PS */
+            else                                /* else increase PCB(make last PCB's next Process) and insert PS's structure elements */
+                increasePCB(PCB, 4 - i, pid);
+
             charParameter[0]++;
         }
     }
+    printPCB(PCB);
+    schedulePCB(PCB);
+    printPCB(PCB);
     return 0;
 }
-PS *increasePCB(const PS *PCB, int niceIndex, pid_t pid)
-{
-    PS *newPS = PCB;
-    while (newPS != NULL)
-        newPS = newPS->next;
-    if (!(newPS = (PS *)malloc(sizeof(PS))))
-        exit(0);
-    initPS(newPS, niceIndex, pid);
-    schedulePCB(PCB);
-    return newPS;
-}
-pid_t schedulePCB(PS *PCB) /* sort PCB */
+void printPCB(PS *PCB)
 {
     PS *tmp = PCB;
-    PS *min = PCB;
-    PS *header = PCB;
     while (tmp != NULL)
     {
+        printf("pid : %d, vruntime : %f, niceIndex : %d\n", tmp->pid, tmp->vruntime, tmp->niceIndex);
+        tmp = tmp->next;
+    }
+    printf("\n\n");
+}
+PS *increasePCB(PS *PCB, int niceIndex, pid_t pid)
+{
+    PS *newPS = PCB;
+    /* PCB 첫 값을 초기화해야함 */
+    while (newPS->next != NULL)
+        newPS = newPS->next;
+    if (!(newPS->next = (PS *)malloc(sizeof(PS))))
+        exit(0);
+    setPS(newPS->next, newPS, NULL, niceIndex, pid);
+    return newPS;
+}
+pid_t schedulePCB(PS *PCB) /* PCB selection sort */
+{
+    const PS *header = PCB;
+    PS *point = PCB;
+    PS *finder;
+    while (point != NULL)
+    {
+        finder = point;
+        while (finder->next != NULL)
+        {
+            finder = finder->next;
+            swapPS(finder, getMinPS(finder));
+            printPCB(header);
+        }
+        point = point->next;
     }
 }
 
-int swapPS(PS *PS1, PS *PS2)
+int swapPS(PS *PS1, PS *PS2) /* pointer swap해보다가 안되면 구조체 내부 값 변경하는 것으로 */
 {
     PS *tmp;
-    tmp->prev = PS1->prev;
-    tmp->next = PS1->next;
-    PS1->prev = PS2->prev;
-    PS1->prev =
+    if (PS1->next == PS2 && PS2->prev == PS1) /* PS1 -> PS2 */
+    {
+        PS *PS1_prev = PS1->prev;
+        PS *PS2_next = PS2->next;
+        tmp = PS1;
+        PS1 = PS2;
+        PS2 = tmp;
+        PS2->next = PS1;
+        PS1->prev = PS2;
+        PS2->prev = PS1_prev;
+        PS1->next = PS2_next;
+        return SUCCESS;
+    }
+    else if (PS2->next == PS1 && PS1->prev == PS2) /* PS2 -> PS1 */
+    {
+        PS *PS2_prev = PS2->prev;
+        PS *PS1_next = PS1->next;
+        tmp = PS2;
+        PS2 = PS1;
+        PS1 = tmp;
+        PS1->next = PS2;
+        PS2->prev = PS1;
+        PS1->prev = PS2_prev;
+        PS2->next = PS1_next;
+        return SUCCESS;
+    }
+    tmp = PS2->next;
+    PS2->next = PS1->next;
+    PS1->next = tmp;
+    tmp = PS2->prev;
+    PS2->prev = PS1->prev;
+    PS1->prev = tmp;
+    tmp = PS2;
+    PS2 = PS1;
+    PS1 = tmp;
+    /* else */
 }
-PS *getMinPCB(PS *PCB)
+PS *getMinPS(PS *PCB)
 {
     PS *tmp = PCB;
     PS *minPCB = PCB;
@@ -89,13 +144,17 @@ PS *getMinPCB(PS *PCB)
     }
     return minPCB;
 }
-int initPS(PS *PS, int niceIndex, pid_t pid) /* initialize PS */
+int setPS(PS *newPS, PS *prev, PS *next, int niceIndex, pid_t pid) /* initialize PS */
 {
-    PS->vruntime = niceValue[niceIndex]; /* vruntime = vruntime(0) + 1.25^nice */
-    PS->niceIndex = niceIndex;
-    PS->pid = pid;
+    newPS->vruntime = niceValue[niceIndex]; /* vruntime = vruntime(0) + 1.25^nice */
+    newPS->niceIndex = niceIndex;
+    newPS->pid = pid;
+    newPS->next = next;
+    newPS->prev = prev;
+    return SUCCESS;
 }
 int renewPS(PS *PS) /* Renew PS's vruntime */
 {
     PS->vruntime += niceValue[PS->niceIndex]; /* vruntime = vruntime + 1.25^nice */
+    return SUCCESS;
 }
