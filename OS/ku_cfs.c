@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         atoi(argv[3]),
         atoi(argv[4]),
         atoi(argv[5])}; /* nx */
-
+    int totalProcessNum = n[0] + n[1] + n[2] + n[3] + n[4];
     /* make child process */
     for (i = 0; i < MAX_NICE_INDEX; i++) /* Iterating for MAX_NICE_INDEX, */
     {
@@ -50,10 +50,17 @@ int main(int argc, char *argv[])
         }
     }
     /* timer와의 연동 -> ts동안 schedule 작업(while) */
+    printPCB(PCB);
     while (1)
     {
+        /* SIGALRM handler, setitimer */
+        /* 1.timer running */
+        /* 2.when timer event raised(in each 1s), call sighandler */
+        /* 3.schedule PCB*/
+        /* 4.run 1st PS in PCB, stopping the others */
     }
-    for (i = 0; i < n[0] + n[1] + n[2] + n[3] + n[4]; i++)
+    /*  */
+    for (i = 0; i < totalProcessNum; i++)
         wait(NULL);
     return 0;
 }

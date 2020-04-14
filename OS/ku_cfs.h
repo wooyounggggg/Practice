@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 #define MAX_NICE_INDEX 5
 #define SUCCESS 1
 #define FAIL 0
