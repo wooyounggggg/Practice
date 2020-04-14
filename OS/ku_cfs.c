@@ -1,5 +1,5 @@
 #include "ku_cfs.h"
-
+void sigAlarmHandler(int);
 void printPCB(PS *);
 PS *increasePCB(PS *, int, pid_t);
 int swapPS(PS *, PS *);
@@ -8,7 +8,7 @@ pid_t schedulePCB(PS *);
 int setPS(PS *, PS *, PS *, int, pid_t);
 int renewPS(PS *);
 const double niceValue[MAX_NICE_INDEX] = {0.64, 0.8, 1, 1.25, 1.5625};
-
+int sigCatcher = UNCAUGHT;
 /* 도식화 먼저 할 것 */
 int main(int argc, char *argv[])
 {
@@ -26,6 +26,20 @@ int main(int argc, char *argv[])
         atoi(argv[4]),
         atoi(argv[5])}; /* nx */
     int totalProcessNum = n[0] + n[1] + n[2] + n[3] + n[4];
+    /* timer set*/
+    int which = ITIMER_REAL;
+    int result;
+    struct itimerval value;
+    struct sigaction sact;
+    memset(&sact, 0, sizeof(sact));
+    sact.sa_handler = sigAlarmHandler;
+    sigaction(SIGALRM, &sact, NULL);
+    value.it_interval.tv_sec = 1;
+    value.it_interval.tv_usec = 0;
+    value.it_value.tv_sec = 1;
+    value.it_value.tv_usec = 0;
+    /* timer set*/
+
     /* make child process */
     for (i = 0; i < MAX_NICE_INDEX; i++) /* Iterating for MAX_NICE_INDEX, */
     {
@@ -49,20 +63,34 @@ int main(int argc, char *argv[])
             charParameter[0]++;
         }
     }
+    sleep(5);
+    kill(PCB->pid, SIGCONT);
+    result = setitimer(which, &value, NULL);
     /* timer와의 연동 -> ts동안 schedule 작업(while) */
-    printPCB(PCB);
     while (1)
     {
+        usleep(1000);
+        if (sigCatcher == CAUGHT)
+        {
+            renewPS(PCB);
+            schedulePCB(PCB);
+            // printPCB(PCB);
+            sigCatcher = UNCAUGHT;
+        }
         /* SIGALRM handler, setitimer */
         /* 1.timer running */
-        /* 2.when timer event raised(in each 1s), call sighandler */
-        /* 3.schedule PCB*/
+        /* 2.when timer expired(in each 1s), call sighandler */
+        /* 3.schedule PCB in handler*/
         /* 4.run 1st PS in PCB, stopping the others */
     }
     /*  */
     for (i = 0; i < totalProcessNum; i++)
         wait(NULL);
     return 0;
+}
+void sigAlarmHandler(int sig)
+{
+    sigCatcher = CAUGHT;
 }
 void printPCB(PS *PCB)
 {
@@ -87,14 +115,24 @@ PS *increasePCB(PS *PCB, int niceIndex, pid_t pid)
 }
 pid_t schedulePCB(PS *PCB) /* PCB selection sort */
 {
-    const PS *header = PCB;
-    PS *point = PCB;
-    PS *finder;
-    while (point != NULL)
+    PS *finder = PCB;
+    // printf("pid : %d\n", PCB->pid);
+    kill(PCB->pid, SIGSTOP);
+    while (finder != NULL)
     {
-        swapPS(point, getMinPS(point));
-        point = point->next;
+        swapPS(finder, getMinPS(finder));
+        finder = finder->next;
     }
+    // printf("pid : %d\n", PCB->pid);
+    kill(PCB->pid, SIGCONT);
+    /*  finder = PCB;
+    while (finder != NULL)
+    {
+        if (finder == PCB)
+            kill(finder->pid, SIGCONT);
+        else
+            kill(finder->pid, SIGSTOP);
+    } */
 }
 
 int swapPS(PS *PS1, PS *PS2) /* swap PS */
