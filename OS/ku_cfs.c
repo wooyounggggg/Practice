@@ -44,14 +44,17 @@ int main(int argc, char *argv[])
             else if (i == 0 && j == 0)          /* if Parent and First PCB elements, */
                 setPS(PCB, NULL, NULL, i, pid); /* just set PS */
             else                                /* else increase PCB(make last PCB's next Process) and insert PS's structure elements */
-                increasePCB(PCB, 4 - i, pid);
+                increasePCB(PCB, i, pid);
 
             charParameter[0]++;
         }
     }
-    printPCB(PCB);
-    schedulePCB(PCB);
-    printPCB(PCB);
+    /* timer와의 연동 -> ts동안 schedule 작업(while) */
+    while (1)
+    {
+    }
+    for (i = 0; i < n[0] + n[1] + n[2] + n[3] + n[4]; i++)
+        wait(NULL);
     return 0;
 }
 void printPCB(PS *PCB)
@@ -82,56 +85,22 @@ pid_t schedulePCB(PS *PCB) /* PCB selection sort */
     PS *finder;
     while (point != NULL)
     {
-        finder = point;
-        while (finder->next != NULL)
-        {
-            finder = finder->next;
-            swapPS(finder, getMinPS(finder));
-            printPCB(header);
-        }
+        swapPS(point, getMinPS(point));
         point = point->next;
     }
 }
 
-int swapPS(PS *PS1, PS *PS2) /* pointer swap해보다가 안되면 구조체 내부 값 변경하는 것으로 */
+int swapPS(PS *PS1, PS *PS2) /* swap PS */
 {
-    PS *tmp;
-    if (PS1->next == PS2 && PS2->prev == PS1) /* PS1 -> PS2 */
-    {
-        PS *PS1_prev = PS1->prev;
-        PS *PS2_next = PS2->next;
-        tmp = PS1;
-        PS1 = PS2;
-        PS2 = tmp;
-        PS2->next = PS1;
-        PS1->prev = PS2;
-        PS2->prev = PS1_prev;
-        PS1->next = PS2_next;
-        return SUCCESS;
-    }
-    else if (PS2->next == PS1 && PS1->prev == PS2) /* PS2 -> PS1 */
-    {
-        PS *PS2_prev = PS2->prev;
-        PS *PS1_next = PS1->next;
-        tmp = PS2;
-        PS2 = PS1;
-        PS1 = tmp;
-        PS1->next = PS2;
-        PS2->prev = PS1;
-        PS1->prev = PS2_prev;
-        PS2->next = PS1_next;
-        return SUCCESS;
-    }
-    tmp = PS2->next;
-    PS2->next = PS1->next;
-    PS1->next = tmp;
-    tmp = PS2->prev;
-    PS2->prev = PS1->prev;
-    PS1->prev = tmp;
-    tmp = PS2;
-    PS2 = PS1;
-    PS1 = tmp;
-    /* else */
+    double vruntimeTmp = PS1->vruntime;
+    int niceIndexTmp = PS1->niceIndex;
+    pid_t pidTmp = PS1->pid;
+    PS1->vruntime = PS2->vruntime;
+    PS1->niceIndex = PS2->niceIndex;
+    PS1->pid = PS2->pid;
+    PS2->vruntime = vruntimeTmp;
+    PS2->niceIndex = niceIndexTmp;
+    PS2->pid = pidTmp;
 }
 PS *getMinPS(PS *PCB)
 {
