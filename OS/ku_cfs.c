@@ -1,4 +1,5 @@
 #include "ku_cfs.h"
+void killAllProcess(PS *);
 void sigAlarmHandler(int);
 void printPCB(PS *);
 PS *increasePCB(PS *, int, pid_t);
@@ -45,12 +46,9 @@ int main(int argc, char *argv[])
     {
         for (j = 0; j < n[i]; j++) /* make n[j] of processes */
         {
-            if ((pid = fork()) == 0) /* if child, */
-            {
+            if ((pid = fork()) == 0)                                   /* if child, */
                 execl("./ku_app", charParameter, charParameter, NULL); /* excute execl with parameter character A ~ Z */
-                break;
-            }
-            else if (pid < 0) /* fork error */
+            else if (pid < 0)                                          /* fork error */
             {
                 perror("fork error\n");
                 return 1;
@@ -59,7 +57,6 @@ int main(int argc, char *argv[])
                 setPS(PCB, NULL, NULL, i, pid); /* just set PS */
             else                                /* else increase PCB(make last PCB's next Process) and insert PS's structure elements */
                 increasePCB(PCB, i, pid);
-
             charParameter[0]++;
         }
     }
@@ -72,6 +69,12 @@ int main(int argc, char *argv[])
         usleep(1000);
         if (sigCatcher == CAUGHT)
         {
+            i++;
+            if (i - MAX_NICE_INDEX == ts)
+            {
+                killAllProcess(PCB); /* i가 몇일때 종료되는지 확인하기(타이밍 계산) : ts+1, ts-1, ts중 하나일듯 */
+                break;
+            }
             renewPS(PCB);
             schedulePCB(PCB);
             // printPCB(PCB);
@@ -87,6 +90,9 @@ int main(int argc, char *argv[])
     for (i = 0; i < totalProcessNum; i++)
         wait(NULL);
     return 0;
+}
+void killAllProcess(PS *PCB)
+{
 }
 void sigAlarmHandler(int sig)
 {

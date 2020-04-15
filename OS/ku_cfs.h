@@ -9,7 +9,7 @@
 #define SUCCESS 1
 #define FAIL 0
 #define CAUGHT 1
-#define UNCAUGHT 2
+#define UNCAUGHT 0
 typedef struct ProcessStructure
 {
     struct ProcessStructure *next;
