@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
         }
     }
     sleep(5);
-    kill(PCB->pid, SIGCONT);
     result = setitimer(which, &value, NULL);
     /* timer와의 연동 -> ts동안 schedule 작업(while) */
     while (1)
@@ -70,13 +69,13 @@ int main(int argc, char *argv[])
         if (sigCatcher == CAUGHT)
         {
             i++;
-            if (i - MAX_NICE_INDEX == ts)
+            if (i - MAX_NICE_INDEX == ts + 1)
             {
                 killAllProcess(PCB); /* i가 몇일때 종료되는지 확인하기(타이밍 계산) : ts+1, ts-1, ts중 하나일듯 */
                 break;
             }
-            renewPS(PCB);
             schedulePCB(PCB);
+            renewPS(PCB);
             // printPCB(PCB);
             sigCatcher = UNCAUGHT;
         }
@@ -96,7 +95,7 @@ void killAllProcess(PS *PCB)
     PS *tmp = PCB;
     while (tmp != NULL)
     {
-        kill(tmp->pid, SIGINT);
+        kill(tmp->pid, SIGKILL);
         tmp = tmp->next;
     }
 }
