@@ -61,11 +61,11 @@ int main(int argc, char *argv[])
         }
     }
     sleep(5);
-    result = setitimer(which, &value, NULL);
+    sigCatcher = CAUGHT;
     /* timer와의 연동 -> ts동안 schedule 작업(while) */
     while (1)
     {
-        usleep(1000);
+        // usleep(1000);
         if (sigCatcher == CAUGHT)
         {
             i++;
@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
                 break;
             }
             schedulePCB(PCB);
+            result = setitimer(which, &value, NULL);
             renewPS(PCB);
             // printPCB(PCB);
             sigCatcher = UNCAUGHT;
@@ -86,8 +87,8 @@ int main(int argc, char *argv[])
         /* 4.run 1st PS in PCB, stopping the others */
     }
     /*  */
-    for (i = 0; i < totalProcessNum; i++)
-        wait(NULL);
+    // for (i = 0; i < totalProcessNum; i++)
+    //     wait(NULL);
     return 0;
 }
 void killAllProcess(PS *PCB)
