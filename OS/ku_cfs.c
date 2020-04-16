@@ -93,6 +93,12 @@ int main(int argc, char *argv[])
 }
 void killAllProcess(PS *PCB)
 {
+    PS *tmp = PCB;
+    while (tmp != NULL)
+    {
+        kill(tmp->pid, SIGINT);
+        tmp = tmp->next;
+    }
 }
 void sigAlarmHandler(int sig)
 {
