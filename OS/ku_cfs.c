@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
     /*  */
     // for (i = 0; i < totalProcessNum; i++)
     //     wait(NULL);
+    free(PCB);
     return 0;
 }
 void killAllProcess(PS *PCB)
@@ -137,6 +138,7 @@ pid_t schedulePCB(PS *PCB) /* PCB selection sort */
     }
     // printf("pid : %d\n", PCB->pid);
     kill(PCB->pid, SIGCONT);
+    return PCB->pid;
     /*  finder = PCB;
     while (finder != NULL)
     {
