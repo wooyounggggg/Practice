@@ -55,7 +55,7 @@ int main(void)
             exit(1);
         }
         read(client_socket, buff_rcv, BUFF_SIZE);
-        printf("receive: %s\n", buff_rcv);
+        printf("receiveTest: %s\n", buff_rcv);
         sprintf(buff_snd, "%d : %s", strlen(buff_rcv), buff_rcv);
         write(client_socket, buff_snd, strlen(buff_snd) + 1); // +1: NULL까지 포함해서 전송 close( client_socket);
     }
