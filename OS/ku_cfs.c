@@ -61,21 +61,22 @@ int main(int argc, char *argv[])
         }
     }
     sleep(5);
-    sigCatcher = CAUGHT;
+    result = setitimer(which, &value, NULL);
+    kill(PCB->pid, SIGCONT);
     /* timer와의 연동 -> ts동안 schedule 작업(while) */
     while (1)
     {
         // usleep(1000);
         if (sigCatcher == CAUGHT)
         {
+            kill(PCB->pid, SIGSTOP);
             i++;
-            if (i - MAX_NICE_INDEX == ts + 1)
+            if (i - MAX_NICE_INDEX == ts)
             {
                 killAllProcess(PCB); /* i가 몇일때 종료되는지 확인하기(타이밍 계산) : ts+1, ts-1, ts중 하나일듯 */
                 break;
             }
             schedulePCB(PCB);
-            result = setitimer(which, &value, NULL);
             renewPS(PCB);
             // printPCB(PCB);
             sigCatcher = UNCAUGHT;
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
     /*  */
     // for (i = 0; i < totalProcessNum; i++)
     //     wait(NULL);
-    free(PCB);
+    // free(PCB);
     return 0;
 }
 void killAllProcess(PS *PCB)
@@ -99,6 +100,13 @@ void killAllProcess(PS *PCB)
     {
         kill(tmp->pid, SIGKILL);
         tmp = tmp->next;
+    }
+    tmp = PCB;
+    while (tmp != NULL)
+    {
+        PS *next = tmp->next;
+        free(tmp);
+        tmp = next;
     }
 }
 void sigAlarmHandler(int sig)
@@ -129,24 +137,14 @@ PS *increasePCB(PS *PCB, int niceIndex, pid_t pid)
 pid_t schedulePCB(PS *PCB) /* PCB selection sort */
 {
     PS *finder = PCB;
-    // printf("pid : %d\n", PCB->pid);
-    kill(PCB->pid, SIGSTOP);
+    // kill(PCB->pid, SIGSTOP);
     while (finder != NULL)
     {
         swapPS(finder, getMinPS(finder));
         finder = finder->next;
     }
-    // printf("pid : %d\n", PCB->pid);
     kill(PCB->pid, SIGCONT);
     return PCB->pid;
-    /*  finder = PCB;
-    while (finder != NULL)
-    {
-        if (finder == PCB)
-            kill(finder->pid, SIGCONT);
-        else
-            kill(finder->pid, SIGSTOP);
-    } */
 }
 
 int swapPS(PS *PS1, PS *PS2) /* swap PS */
@@ -160,6 +158,7 @@ int swapPS(PS *PS1, PS *PS2) /* swap PS */
     PS2->vruntime = vruntimeTmp;
     PS2->niceIndex = niceIndexTmp;
     PS2->pid = pidTmp;
+    return SUCCESS;
 }
 PS *getMinPS(PS *PCB)
 {
