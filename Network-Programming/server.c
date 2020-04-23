@@ -5,59 +5,72 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #define BUFF_SIZE 1024
 int i = 0;
 int main(void)
 {
+    int server_socket;
+    int client_socket;
+    int client_addr_size;
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr;
-    int server_socket = 0; /* for server socket fd allocation */
-    int client_socket = 0; /* for client socket fd allocation */
-    int client_addr_size = sizeof(client_addr);
-
-    char buff[BUFF_SIZE + 5]; /*  */
-    char buff_rcv[BUFF_SIZE];
-    char buff_snd[BUFF_SIZE];
-    memset(&server_addr, 0x00, sizeof(server_addr));
-    memset(&client_addr, 0x00, sizeof(client_addr));
+    char buff_rcv[BUFF_SIZE + 5];
+    char buff_snd[BUFF_SIZE + 5];
+    char serverMsg[BUFF_SIZE];
     server_socket = socket(PF_INET, SOCK_STREAM, 0);
-    if (server_socket == -1)
+    if (-1 == server_socket)
     {
-        printf("생성 실패\n");
+        printf("server socket 생성 실패\n");
         exit(1);
     }
-    server_addr.sin_family = AF_INET;                /* IPv4 Protocol */
-    server_addr.sin_port = htons(4000);              /* port 4000 */
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); /*  */
-    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(4000);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (-1 == bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)))
     {
-        printf("bind() error\n");
+        printf("bind() 실행 에러\n");
         exit(1);
     }
-    if (listen(server_socket, 5) == -1)
+    if (-1 == listen(server_socket, 5))
     {
-        printf("listen error\n");
+        printf("listen() 실행 실패\n");
         exit(1);
     }
+    printf("waiting connection...\n");
     client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_size);
     if (client_socket == -1)
     {
-        printf("client connection error\n");
+        printf("connection error\n");
         exit(1);
     }
+    printf("connected\n");
+    client_addr_size = sizeof(client_addr);
     while (1)
     {
-        client_addr_size = sizeof(client_addr);
-        client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_size);
-        if (-1 == client_socket)
-        {
-            printf("클라이언트 연결수락실패\n");
-            exit(1);
-        }
+        /* client send -> server read -> server send -> client read -> client send */
         read(client_socket, buff_rcv, BUFF_SIZE);
-        printf("receiveTest: %s\n", buff_rcv);
-        sprintf(buff_snd, "%d : %s", strlen(buff_rcv), buff_rcv);
-        write(client_socket, buff_snd, strlen(buff_snd) + 1); // +1: NULL까지 포함해서 전송 close( client_socket);
+        if (strcmp(buff_rcv, "bye") == 0)
+        {
+            printf("[client_recv] %s\n", buff_rcv);
+            printf("connection with client end.\n\n");
+            close(client_socket);
+            printf("waiting connection...\n");
+            client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_size);
+            if (client_socket == -1)
+            {
+                printf("connection error\n");
+                exit(1);
+            }
+            printf("connected\n");
+            continue;
+        }
+        printf("[client_recv] %s\n", buff_rcv);
+        printf("[server_send] ");
+        scanf("%s", serverMsg);
+        // sprintf(buff_snd, "%d : %s", strlen(buff_rcv), buff_rcv);
+        write(client_socket, serverMsg, strlen(serverMsg) + 1); // +1: NULL까지 포함해서 전송
+        // printf("check\n");
     }
-    return 0;
 }
