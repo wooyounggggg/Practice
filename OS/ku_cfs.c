@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     sleep(5);
     result = setitimer(which, &value, NULL);
     kill(PCB->pid, SIGCONT);
+    // pause();
     /* timer와의 연동 -> ts동안 schedule 작업(while) */
     while (1)
     {
@@ -76,10 +77,11 @@ int main(int argc, char *argv[])
                 killAllProcess(PCB); /* i가 몇일때 종료되는지 확인하기(타이밍 계산) : ts+1, ts-1, ts중 하나일듯 */
                 break;
             }
-            schedulePCB(PCB);
             renewPS(PCB);
+            schedulePCB(PCB);
             // printPCB(PCB);
             sigCatcher = UNCAUGHT;
+            // pause();
         }
         /* SIGALRM handler, setitimer */
         /* 1.timer running */
@@ -173,7 +175,7 @@ PS *getMinPS(PS *PCB)
 }
 int setPS(PS *newPS, PS *prev, PS *next, int niceIndex, pid_t pid) /* initialize PS */
 {
-    newPS->vruntime = niceValue[niceIndex]; /* vruntime = vruntime(0) + 1.25^nice */
+    newPS->vruntime = 0; /* vruntime = vruntime(0) + 1.25^nice */
     newPS->niceIndex = niceIndex;
     newPS->pid = pid;
     newPS->next = next;
