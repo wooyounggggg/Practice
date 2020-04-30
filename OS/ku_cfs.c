@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     struct sigaction sact;
     memset(&sact, 0, sizeof(sact));
     sact.sa_handler = sigAlarmHandler;
+    sact.sa_flags = SA_NOMASK;
     sigaction(SIGALRM, &sact, NULL);
     value.it_interval.tv_sec = 1;
     value.it_interval.tv_usec = 0;
