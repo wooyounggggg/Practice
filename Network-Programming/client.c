@@ -13,6 +13,7 @@ int main(void)
     struct sockaddr_in server_addr;
     char msg[BUFF_SIZE] = "";
     char buff[BUFF_SIZE + 5];
+    char serverIP[20];
     client_socket = socket(PF_INET, SOCK_STREAM, 0);
     if (client_socket == -1)
     {
@@ -28,8 +29,10 @@ int main(void)
         printf("접속 실패\n");
         exit(1);
     }
+    strcpy(serverIP, inet_ntoa(server_addr.sin_addr));
     while (strcmp(msg, "bye") != 0)
     {
+        printf("server : %s\n", serverIP);
         printf("[client_send] ");
         scanf("%s", msg);
         write(client_socket, msg, strlen(msg) + 1); // +1: NULL까지 포함해서 전송
