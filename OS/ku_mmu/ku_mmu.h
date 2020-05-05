@@ -3,7 +3,7 @@
 #include <string.h>
 #define PRESENT 1
 #define SWAPPED 0
-#define UNMAPPED -1
+#define INVALID -1
 #define PDE_INDEX 0
 #define PMDE_INDEX 1
 #define PTE_INDEX 2
@@ -47,8 +47,6 @@ int ku_run_proc(char pid, struct ku_pte **ku_cr3) /* Performs Context Switch. If
             return -1;
     /* 2. map ku_cr3 to PCB's PDBR */
     *ku_cr3 = PCBByPid->PDBR;
-    if (*ku_cr3 == NULL)
-        return -1; /* if fail, return -1 */
     return 0;
 }
 
@@ -82,19 +80,19 @@ PCB *getPCBByPid(char pid)
     }
     return NULL;
 }
-int getPTEState(char PTE)
+int getPTEState(struct ku_pte *PTE)
 {
-    if (PTE == 0)
-        return UNMAPPED;
-    else if ((PTE & 0x01) && (PTE >> 2)) /* if Present bit is 1 and PFN > 0, return PRESENT */
+    if (PTE->entry == 0)
+        return INVALID;
+    else if ((PTE->entry & 0x01) && (PTE->entry >> 2)) /* if Present bit is 1 and PFN > 0, return PRESENT */
         return PRESENT;
-    else if (!(PTE & 0x01) && (PTE >> 1)) /* if Present bit is 0 and Swap Offset > 0, return SWAPPED */
+    else if (!(PTE->entry & 0x01) && (PTE->entry >> 1)) /* if Present bit is 0 and Swap Offset > 0, return SWAPPED */
         return SWAPPED;
 }
 int getPageIndexByVA(char *pageIndexes, char va)
 {
     if (pageIndexes == NULL)
-        pageIndexes == (char *)malloc(sizeof(char) * 4);
+        pageIndexes = (char *)malloc(sizeof(char) * 4);
     if (pageIndexes == NULL)
         return 0;
     pageIndexes[PDE_INDEX] = va >> 6;
