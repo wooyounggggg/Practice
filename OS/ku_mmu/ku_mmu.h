@@ -22,40 +22,6 @@ typedef struct PCB
 PCB *PCBList = NULL;
 struct ku_pte *swapSpace = NULL;
 
-/* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
-int ku_page_fault(char pid, char va)
-{
-    if (1 == 1) /* if success, return 0 */
-        return 0;
-    return -1; /* else return -1 */
-}
-void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
-{
-    /*1. Allocate memory space for pmem */
-    struct ku_pte *pmem = (struct ku_pte *)malloc(sizeof(struct ku_pte) * mem_size);
-    if (pmem == NULL)
-        return 0;
-    /*2. Allocate swap space*/
-    swapSpace = (struct ku_pte *)malloc(sizeof(struct ku_pte) * swap_size);
-    if (swapSpace == NULL)
-    {
-        free(pmem);
-        return 0;
-    }
-    return pmem;
-}
-int ku_run_proc(char pid, struct ku_pte **ku_cr3) /* Performs Context Switch. If pid is new, function creates a process in virtual and its page directory */
-{
-    /* 1. get PCB(global) which has parameter local variable pid(functionally) : getPCBByPid(char pid) */
-    PCB *PCBByPid = getPCBByPid(pid);
-    if (PCBByPid == NULL)
-        if ((PCBByPid = addPCBElement(pid)) == NULL)
-            return -1;
-    /* 2. map ku_cr3 to PCB's PDBR */
-    *ku_cr3 = PCBByPid->PDBR;
-    return 0;
-}
-
 PCB *addPCBElement(char pid)
 {
     PCB *newPCB = PCBList;
@@ -106,4 +72,37 @@ int getPageIndexByVA(char *pageIndexes, char va)
     pageIndexes[PTE_INDEX] = va >> 2 & 0x03;
     pageIndexes[PAGE_INDEX] = va & 0x03;
     return 1;
+}
+/* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
+int ku_page_fault(char pid, char va)
+{
+    if (1 == 1) /* if success, return 0 */
+        return 0;
+    return -1; /* else return -1 */
+}
+void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
+{
+    /*1. Allocate memory space for pmem */
+    struct ku_pte *pmem = (struct ku_pte *)malloc(sizeof(struct ku_pte) * mem_size);
+    if (pmem == NULL)
+        return 0;
+    /*2. Allocate swap space*/
+    swapSpace = (struct ku_pte *)malloc(sizeof(struct ku_pte) * swap_size);
+    if (swapSpace == NULL)
+    {
+        free(pmem);
+        return 0;
+    }
+    return pmem;
+}
+int ku_run_proc(char pid, struct ku_pte **ku_cr3) /* Performs Context Switch. If pid is new, function creates a process in virtual and its page directory */
+{
+    /* 1. get PCB(global) which has parameter local variable pid(functionally) : getPCBByPid(char pid) */
+    PCB *PCBByPid = getPCBByPid(pid);
+    if (PCBByPid == NULL)
+        if ((PCBByPid = addPCBElement(pid)) == NULL)
+            return -1;
+    /* 2. map ku_cr3 to PCB's PDBR */
+    *ku_cr3 = PCBByPid->PDBR;
+    return 0;
 }
