@@ -20,8 +20,10 @@ typedef struct PCB
     struct ku_pte *PDBR;
 } PCB;
 PCB *PCBList = NULL;
+struct ku_pte *swapSpace = NULL;
 
-int ku_page_fault(char pid, char va) /* handle page fault by 'demanding page' or 'swapping' -> FIFO. Page Directory and Page Table not swapped out */
+/* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
+int ku_page_fault(char pid, char va)
 {
     if (1 == 1) /* if success, return 0 */
         return 0;
@@ -29,14 +31,18 @@ int ku_page_fault(char pid, char va) /* handle page fault by 'demanding page' or
 }
 void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
 {
-    /* 
-    1.init PCBList
-
-    2.
-    */
-    if (1 == 1)
-        return; /* if success, return the pointer of allocated area. */
-    return 0;   /* if fail, return 0 */
+    /*1. Allocate memory space for pmem */
+    struct ku_pte *pmem = (struct ku_pte *)malloc(sizeof(struct ku_pte) * mem_size);
+    if (pmem == NULL)
+        return 0;
+    /*2. Allocate swap space*/
+    swapSpace = (struct ku_pte *)malloc(sizeof(struct ku_pte) * swap_size);
+    if (swapSpace == NULL)
+    {
+        free(pmem);
+        return 0;
+    }
+    return pmem;
 }
 int ku_run_proc(char pid, struct ku_pte **ku_cr3) /* Performs Context Switch. If pid is new, function creates a process in virtual and its page directory */
 {
