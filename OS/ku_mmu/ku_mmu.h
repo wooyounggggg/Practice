@@ -72,14 +72,12 @@ int ku_page_fault(char pid, char va)
     /* 1. get PCB by PID */
     PCB *PCBByPid = getPCBByPid(pid);
     /* 2. Page Directory ~ Page Mapping*/
-    mappingProcess(PCBByPid->PDBR, va);
-    /* 3. */
-    if (1 == 1) /* if success, return 0 */
+    if (mappingProcess(PCBByPid->PDBR, va))
         return 0;
     return -1; /* else return -1 */
 }
 /* Page Directory와 Page Middle Dir, Page Table 및 Page를 pmem에 적재해야 하는데, Page Directory는 PCB->PDBR로 적재를 하지 va를 통한 indexing으로 적재하지 않기 때문에,
-이를 고려하여서 분기로 적재해주거나 따로 함수를 하나 만들어야 함 */
+이를 고려하여서 분기로 적재해주거나 따로 함수를 하나 만들어야 함. addPCBElement에 Page Directory를 대상으로 mapPageOrTable을 수행하기는 했으나, 논리가 완성되지 않음. */
 int mapPageOrTable(struct ku_pte *pte, int pageOrTable) /* map page table to pmem */
 {
     struct ku_pte *newPageOrTable;
@@ -129,6 +127,7 @@ int mappingProcess(struct ku_pte *pageDirectory, char va) /* map Page Directory 
     else if (getPTEState(selectedPTE) == SWAPPED)
         swapPageOrTable(selectedPTE);
     free(pageIndexes);
+    return 1;
 }
 
 int setPCB(PCB *newPCB, PCB *next, PCB *prev, char pid)
