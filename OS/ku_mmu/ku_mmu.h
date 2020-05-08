@@ -21,10 +21,11 @@ typedef struct PCB
     struct PCB *prev;
     struct ku_pte *PDBR;
 } PCB;
-PCB *PCBList = NULL;
+PCB *PCBHeader = NULL;
 struct ku_pte *pmem = NULL;
 struct ku_pte *swapSpace = NULL;
 
+int setPCB(PCB *, PCB *, PCB *, char);
 PCB *addPCBElement(char);
 PCB *getPCBByPid(char);
 int getPTEState(struct ku_pte *);
@@ -39,17 +40,6 @@ void *ku_mmu_init(unsigned int, unsigned int);
 int ku_run_proc(char, struct ku_pte **);
 
 /* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
-int ku_page_fault(char pid, char va)
-{
-    /* 1. get PCB by PID */
-    PCB *PCBByPid = getPCBByPid(pid);
-    /* 2. Page Directory ~ Page Mapping*/
-    mappingProcess(PCBByPid->PDBR, va);
-    /* 3. */
-    if (1 == 1) /* if success, return 0 */
-        return 0;
-    return -1; /* else return -1 */
-}
 void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
 {
     /*1. Allocate memory space for pmem */
@@ -77,7 +67,17 @@ int ku_run_proc(char pid, struct ku_pte **ku_cr3) /* Performs Context Switch. If
     *ku_cr3 = PCBByPid->PDBR;
     return 0;
 }
-
+int ku_page_fault(char pid, char va)
+{
+    /* 1. get PCB by PID */
+    PCB *PCBByPid = getPCBByPid(pid);
+    /* 2. Page Directory ~ Page Mapping*/
+    mappingProcess(PCBByPid->PDBR, va);
+    /* 3. */
+    if (1 == 1) /* if success, return 0 */
+        return 0;
+    return -1; /* else return -1 */
+}
 /* Page Directory와 Page Middle Dir, Page Table 및 Page를 pmem에 적재해야 하는데, Page Directory는 PCB->PDBR로 적재를 하지 va를 통한 indexing으로 적재하지 않기 때문에,
 이를 고려하여서 분기로 적재해주거나 따로 함수를 하나 만들어야 함 */
 int mapPageOrTable(struct ku_pte *pte, int pageOrTable) /* map page table to pmem */
@@ -131,29 +131,47 @@ int mappingProcess(struct ku_pte *pageDirectory, char va) /* map Page Directory 
     free(pageIndexes);
 }
 
-PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
+int setPCB(PCB *newPCB, PCB *next, PCB *prev, char pid)
 {
-    PCB *newPCB = PCBList;
-    while (newPCB != NULL)
-        newPCB = newPCB->next;
-    newPCB = (PCB *)malloc(sizeof(PCB));
-    if (newPCB == NULL)
-        return NULL;
     newPCB->PDBR = (struct ku_pte *)malloc(sizeof(struct ku_pte) * 4);
     if (newPCB->PDBR == NULL)
+        return 0;
+    newPCB->pid = pid;
+    newPCB->next = next;
+    newPCB->prev = prev;
+    return 1;
+}
+PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
+{
+    PCB *newPCB = PCBHeader;
+    if (PCBHeader == NULL)
     {
-        free(newPCB);
+        PCBHeader = (PCB *)malloc(sizeof(PCB));
+        if (PCBHeader == NULL)
+            return NULL;
+        if (!setPCB(PCBHeader, NULL, NULL, pid))
+        {
+            free(PCBHeader);
+            return NULL;
+        }
+        return PCBHeader;
+    }
+    while (newPCB->next != NULL)
+        newPCB = newPCB->next;
+    newPCB->next = (PCB *)malloc(sizeof(PCB));
+    if (newPCB->next == NULL)
+        return NULL;
+    if (!setPCB(newPCB->next, NULL, newPCB, pid))
+    {
+        free(newPCB->next);
         return NULL;
     }
     mapPageOrTable(newPCB->PDBR, TABLE);
-    newPCB->prev = NULL;
-    newPCB->next = NULL;
-    newPCB->pid = pid;
     return newPCB;
 }
 PCB *getPCBByPid(char pid)
 {
-    PCB *tmp = PCBList;
+    PCB *tmp = PCBHeader;
     while (tmp != NULL)
     {
         if (tmp->pid == pid)
