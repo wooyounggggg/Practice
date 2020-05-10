@@ -302,7 +302,7 @@ KU_PTE *getPageOrTableByPFN(char PFN)
 }
 char getEntryByPFN(char PFN)
 {
-    return PFN << 2 + 1;
+    return (PFN << 2) + 1;
 }
 char getPFNByEntry(char entry)
 {
