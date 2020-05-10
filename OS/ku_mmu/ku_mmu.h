@@ -279,7 +279,7 @@ int mapTable(KU_PTE *parentPTE)
     }
     else
     {
-        printf("mapTable else test\n");
+        printf("\n\n\n\nmapTable else test\n\n\n\n");
         setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry);
     }
 
@@ -453,6 +453,7 @@ PCB *getPCBByPDBR(KU_PTE *PDBR)
     {
         if (tmp->PDBR == PDBR)
             return tmp;
+        /* printf("getPCB if test : %p\ngetPCB if test : %p\n", PCBHeader, tmp); */
         tmp = tmp->next;
     }
     return NULL;
