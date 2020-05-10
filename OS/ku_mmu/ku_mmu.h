@@ -273,9 +273,15 @@ int mapTable(KU_PTE *parentPTE)
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
     if (getPCBByPDBR(parentPTE) == NULL)
+    {
+        printf("mapTable if test\n");
         setTableEntry(parentPTE, newEntry);
+    }
     else
+    {
+        printf("mapTable else test\n");
         setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry);
+    }
 
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
