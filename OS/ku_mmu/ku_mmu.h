@@ -371,6 +371,7 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
             free(PCBHeader);
             return NULL;
         }
+        mapDirectory(PCBHeader->PDBR);
         return PCBHeader;
     }
     while (newPCB->next != NULL)
