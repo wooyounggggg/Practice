@@ -334,7 +334,6 @@ FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement
 {
     FreeListElement *newFreeListElement = freeListHeader;
     int i = 0;
-    printf("addFreeListElement test %d\n", ++i);
     if (newFreeListElement == NULL)
     {
         freeListHeader = (FreeListElement *)malloc(sizeof(FreeListElement));
@@ -345,10 +344,8 @@ FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement
             free(freeListHeader);
             return NULL;
         }
-        printf("addFreeListElement test %d\n", ++i);
         return freeListHeader;
     }
-    printf("addFreeListElement test %d\n", ++i);
     while (newFreeListElement->next != NULL)
         newFreeListElement = newFreeListElement->next;
     newFreeListElement->next = (FreeListElement *)malloc(sizeof(FreeListElement));
