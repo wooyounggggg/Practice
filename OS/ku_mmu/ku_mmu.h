@@ -284,6 +284,7 @@ void setTableToPmem(KU_PTE *notUsingPmem, KU_PTE *table)
 int mapTable(KU_PTE *parentPTE)
 {
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
+    printf("mapTable test : %p\n", parentPTE);
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
