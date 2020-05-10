@@ -409,7 +409,7 @@ char *getPageIndexesByVA(char va)
     pageIndexes = (char *)malloc(sizeof(char) * 4);
     if (pageIndexes == NULL)
         return NULL;
-    pageIndexes[PDE_INDEX] = va >> 6;
+    pageIndexes[PDE_INDEX] = va >> 6 & 0x03;
     pageIndexes[PMDE_INDEX] = va >> 4 & 0x03;
     pageIndexes[PTE_INDEX] = va >> 2 & 0x03;
     pageIndexes[PAGE_INDEX] = va & 0x03;
