@@ -476,7 +476,7 @@ PCB *getPCBByPDBR(KU_PTE *PDBR)
     PCB *tmp = PCBHeader;
     while (tmp != NULL)
     {
-        if (tmp->PDBR == PDBR)
+        if (tmp->PDBR == PDBR || tmp->PDBR + 1 == PDBR || tmp->PDBR + 2 == PDBR || tmp->PDBR + 3 == PDBR)
             return tmp;
         /* printf("getPCB if test : %p\ngetPCB if test : %p\n", PCBHeader, tmp); */
         tmp = tmp->next;
