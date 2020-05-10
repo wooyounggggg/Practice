@@ -73,6 +73,25 @@ int ku_page_fault(char, char);
 void *ku_mmu_init(unsigned int, unsigned int);
 int ku_run_proc(char, KU_PTE **);
 
+void printAllPCB()
+{
+    PCB *tmp = PCBHeader;
+    printf("PFN list : ");
+    while (tmp != NULL)
+    {
+        printf("%d ", tmp->PFN);
+        tmp = tmp->next;
+    }
+    printf("\n");
+    tmp = PCBHeader;
+    printf("PDBR list : ");
+    while (tmp != NULL)
+    {
+        printf("%p ", tmp->PDBR);
+        tmp = tmp->next;
+    }
+    printf("\n");
+}
 void printAllPagesEntry()
 {
     KU_PTE *tmp = pmem;
@@ -82,6 +101,7 @@ void printAllPagesEntry()
         tmp += PAGE_OFFSET;
     }
     printf("\n");
+    printAllPCB();
 }
 void printAllFreeList()
 {
@@ -236,7 +256,6 @@ void setDirToPmem(KU_PTE *notUsingPmem, KU_PTE *PDBR)
 }
 int mapDirectory(KU_PTE *PDBR)
 {
-    /* Directory에 대한 정보는 PCB에서 갖고 있기 때문에, PFN을 통해 Dir에 접근할 필요 없음 */
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
@@ -382,7 +401,6 @@ FreeListElement *getTrailerOfFreeList()
 FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement *next, FreeListElement *prev)
 {
     FreeListElement *newFreeListElement = freeListHeader;
-    int i = 0;
     if (newFreeListElement == NULL)
     {
         freeListHeader = (FreeListElement *)malloc(sizeof(FreeListElement));
@@ -430,6 +448,7 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
             free(PCBHeader);
             return NULL;
         }
+        printf("setPCB test : %p\n", PCBHeader->PDBR);
         mapDirectory(PCBHeader->PDBR);
         return PCBHeader;
     }
