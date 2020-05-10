@@ -146,35 +146,26 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     printf("pmem : %p\n", pmem);
     if (pageIndexes == NULL)
         return 0;
-    printf("mapping Process start\n");
-    printf("page directory first entry invalid Test : %d\n", getPTEState(pageDirectory));
     selectedPTE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
-    printf("page directory indexed entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(selectedPTE);               /* map PTE referenced by selectedPTE */
     /*  */ printf("get Middle Directory by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(pageDirectory->entry)));
-    printf("page directory indexed entry invalid Test(after map) : %d\n", getPTEState(selectedPTE));
     selectedPTE = getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)) + /* Search Page Middle Directory entry */
                   pageIndexes[PMDE_INDEX];
     /*  */ printf("get Table by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)));
-    printf("page middld directory entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
-    if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
-        mapTable(selectedPTE);               /* map PTE referenced by selectedPTE */
-    printf("page middld directory entry invalid Test(after map) : %d\n", getPTEState(selectedPTE));
+    if (getPTEState(selectedPTE) == INVALID)                               /* if searched PTE is INVALID, */
+        mapTable(selectedPTE);                                             /* map PTE referenced by selectedPTE */
     selectedPTE = getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)) + /* Search Page Directory entry */
                   pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
     /*  */ printf("get Page by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(pageDirectory->entry)));
-    printf("page table entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
         mapPage(selectedPTE);                /* map page referenced by selectedPTE */
     else if (getPTEState(selectedPTE) == SWAPPED)
         swapPage(selectedPTE);
-    printf("page table entry invalid Test(after map) : %d\n", getPTEState(selectedPTE));
     free(pageIndexes);
-    printf("mapping Process end\n");
     return 1;
 }
 int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page. If no page of default, return FreeList's header PFN and move header to next */
@@ -221,7 +212,6 @@ int mapDirectory(KU_PTE *PDBR)
         swapPage(notUsingPmem);
         setDirToPmem(notUsingPmem, PDBR);
     }
-    printf("mapDirectory\n");
     return 1;
 }
 void setTableToPmem(KU_PTE *notUsingPmem, KU_PTE *table)
@@ -242,8 +232,6 @@ int mapTable(KU_PTE *parentPTE)
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
-    printf("parent pte's entry : %d\n", parentPTE->entry);
-    printf("parent PTE's addr : %p\n", parentPTE);
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
     /* 5. Initialize new Table */
@@ -257,7 +245,6 @@ int mapTable(KU_PTE *parentPTE)
         swapPage(notUsingPmem);
         setTableToPmem(notUsingPmem, newTable);
     }
-    printf("mapTable\n");
     return 1;
 }
 int mapPage(KU_PTE *parentPTE)
@@ -287,7 +274,6 @@ int mapPage(KU_PTE *parentPTE)
         setPageToPmem(notUsingPmem, newPage);
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
     }
-    printf("mapPage\n");
     return 1;
 }
 void setPageToPmem(KU_PTE *notUsingPmem, KU_PTE *page)
