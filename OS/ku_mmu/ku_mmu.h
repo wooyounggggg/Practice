@@ -342,8 +342,9 @@ int setFreeListElement(FreeListElement *newFreeListElement, KU_PTE *parentPTE, c
 FreeListElement *getTrailerOfFreeList()
 {
     FreeListElement *tmp = freeListHeader;
-    while (tmp->next != NULL)
-        tmp = tmp->next;
+    while (tmp != NULL)
+        if (tmp->next == NULL)
+            return tmp;
     return tmp;
 }
 FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement *next, FreeListElement *prev)
