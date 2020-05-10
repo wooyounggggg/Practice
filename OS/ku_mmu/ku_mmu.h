@@ -143,18 +143,22 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     KU_PTE *selectedPTE;
     char *pageIndexes = getPageIndexesByVA(va);
     printf("pageIndexes : %d %d %d %d\n", pageIndexes[0], pageIndexes[1], pageIndexes[2], pageIndexes[3]);
+    printf("pmem : %p\n", pmem);
     if (pageIndexes == NULL)
         return 0;
     printf("mapping Process start\n");
     printf("page directory first entry invalid Test : %d\n", getPTEState(pageDirectory));
+    /*  */ printf("page directory address : %p\n", pageDirectory);
     selectedPTE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     printf("page directory indexed entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(selectedPTE);               /* map PTE referenced by selectedPTE */
+    /*  */ printf("get Middle Directory by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(pageDirectory->entry)));
     printf("page directory indexed entry invalid Test(after map) : %d\n", getPTEState(selectedPTE));
     selectedPTE = getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)) + /* Search Page Middle Directory entry */
                   pageIndexes[PMDE_INDEX];
+    /*  */ printf("get Table by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)));
     printf("page middld directory entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
@@ -163,6 +167,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     selectedPTE = getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)) + /* Search Page Directory entry */
                   pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
+    /*  */ printf("get Page by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(pageDirectory->entry)));
     printf("page table entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
         mapPage(selectedPTE);                /* map page referenced by selectedPTE */
