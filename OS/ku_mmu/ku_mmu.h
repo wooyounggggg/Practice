@@ -260,30 +260,44 @@ int mapTable(KU_PTE *parentPTE)
 int mapPage(KU_PTE *parentPTE)
 {
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
+    int i = 0;
+    printf("map page test %d\n", ++i);
     char notUsingPFN;
+    printf("map page test %d\n", ++i);
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
+    printf("map page test %d\n", ++i);
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
+    printf("map page test %d\n", ++i);
     /* 2. Get Entry of PFN found in seq 1*/
     char newEntry = getEntryByPFN(notUsingPFN);
+    printf("map page test %d\n", ++i);
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
+    printf("map page test %d\n", ++i);
     /* 4. Make new page : KU_PTE[4]*/
     KU_PTE *newPage = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
     /* 5. Initialize new Table */
     initializeTable(newPage);
+    printf("map page test %d\n", ++i);
     /* 6. if 'not using location' is in pmem, allocate new table to pmem and add Free-list element with PFN*/
     if (notUsingPFNLocation == IN_PMEM)
     {
         setPageToPmem(notUsingPmem, newPage);
+        printf("map page if test %d\n", ++i);
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
+        printf("map page if test %d\n", ++i);
     }
     /* 7. if 'not using location' is in free-list, swap it to swapSpace and allocate new table to pmem and Free-list element with PFN */
     else
     {
         swapPage(notUsingPmem);
+        printf("map page else test %d\n", ++i);
         setPageToPmem(notUsingPmem, newPage);
+        printf("map page else test %d\n", ++i);
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
+        printf("map page else test %d\n", ++i);
     }
+    printf("map page test %d\n", ++i);
     printf("mapPage\n");
     return 1;
 }
