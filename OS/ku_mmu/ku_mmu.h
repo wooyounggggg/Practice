@@ -183,14 +183,14 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(PDE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(PDE);               /* map PTE referenced by selectedPTE */
-    /*  */ printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry)));
+    /* printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry))); */
     printAllPagesEntry();
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
            pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(PMDE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(PMDE);               /* map PTE referenced by selectedPTE */
-    /*  */ printf("get Table addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PMDE->entry)));
+    /* printf("get Table addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PMDE->entry))); */
     printAllPagesEntry();
     PTE = getPageOrTableByPFN(getPFNByEntry(PMDE->entry)) + /* Search Page Directory entry */
           pageIndexes[PTE_INDEX];
@@ -199,7 +199,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         mapPage(PTE);                /* map page referenced by selectedPTE */
     else if (getPTEState(PTE) == SWAPPED)
         swapPage(PTE);
-    /*  */ printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry)));
+    /* printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry))); */
     printAllPagesEntry();
     printAllFreeList();
     free(pageIndexes);
@@ -283,6 +283,7 @@ int mapTable(KU_PTE *parentPTE)
         swapPage(notUsingPmem);
         setTableToPmem(notUsingPmem, newTable);
     }
+    free(newTable);
     return 1;
 }
 int mapPage(KU_PTE *parentPTE)
@@ -316,6 +317,7 @@ int mapPage(KU_PTE *parentPTE)
         setPageToPmem(notUsingPmem, newPage);
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
     }
+    free(newPage);
     return 1;
 }
 void setPageToPmem(KU_PTE *notUsingPmem, KU_PTE *page)
