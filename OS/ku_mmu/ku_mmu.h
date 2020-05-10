@@ -261,7 +261,10 @@ int mapDirectory(KU_PTE *PDBR)
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
     /* 2. Allocate Directory to pmem with no-use-PFN (pmem's entry = PDBR)*/
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
+    printf("mapDirectory test : %p\n", PDBR);
+    printf("getPCBByPDBR(PDBR)->PFN : %d\n", getPCBByPDBR(PDBR)->PFN);
     getPCBByPDBR(PDBR)->PFN = notUsingPFN;
+    printf("getPCBByPDBR(PDBR)->PFN : %d\n", getPCBByPDBR(PDBR)->PFN);
     printf("Not Using PFN : %d\n", notUsingPFN);
     initializeTable(PDBR);
     if (notUsingPFNLocation == IN_PMEM)
