@@ -141,7 +141,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     if (pageIndexes == NULL)
         return 0;
     printf("mapping Process start\n");
-    printf("invalid Test : %d\n", getPTEState(selectedPTE));
+    printf("invalid Test : %d\n", getPTEState(pageDirectory));
     selectedPTE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
