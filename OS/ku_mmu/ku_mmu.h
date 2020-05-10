@@ -458,6 +458,7 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
     while (newPCB->next != NULL)
         newPCB = newPCB->next;
     newPCB->next = (PCB *)malloc(sizeof(PCB));
+    printf("addPCB element test : %p\n", newPCB->next->PDBR);
     if (newPCB->next == NULL)
         return NULL;
     if (!setPCB(newPCB->next, NULL, newPCB, pid))
@@ -465,7 +466,8 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
         free(newPCB->next);
         return NULL;
     }
-    mapDirectory(newPCB->PDBR);
+    mapDirectory(newPCB->next->PDBR);
+    printf("addPCB element test : %p\n", newPCB->next->PDBR);
     return newPCB;
 }
 PCB *getPCBByPDBR(KU_PTE *PDBR)
