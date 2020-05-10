@@ -175,6 +175,7 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
 {
     char PFN = 1;
     KU_PTE *tmpPmem = getPageOrTableByPFN(PFN);
+    printf("pmem : %p pmem+4 : %p", pmem, pmem + 4);
     while (tmpPmem != NULL) /* iterate pmem in first (for default pmem) */
     {
         if (tmpPmem->entry & 0x03)
@@ -184,6 +185,7 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
         }
         PFN++;
         tmpPmem = getPageOrTableByPFN(PFN);
+        printf("\nnot using pfn addr in funct : %p\n\n", tmpPmem);
     }
     PFN = freeListHeader->PFN;
     freeListHeader = freeListHeader->next;
