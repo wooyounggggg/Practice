@@ -144,15 +144,13 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(selectedPTE);               /* map PTE referenced by selectedPTE */
-    /* else if (getPTEState(selectedPTE) == SWAPPED)
-        swapPage(selectedPTE); */
+    printf("invalid Test : %d\n", getPTEState(selectedPTE));
     selectedPTE = getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)) + /* Search Page Middle Directory entry */
                   pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(selectedPTE);               /* map PTE referenced by selectedPTE */
-    /* else if (getPTEState(selectedPTE) == SWAPPED)
-        swapPage(selectedPTE); */
+    printf("invalid Test : %d\n", getPTEState(selectedPTE));
     selectedPTE = getPageOrTableByPFN(getPFNByEntry(selectedPTE->entry)) + /* Search Page Directory entry */
                   pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
@@ -160,6 +158,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         mapPage(selectedPTE);                /* map page referenced by selectedPTE */
     else if (getPTEState(selectedPTE) == SWAPPED)
         swapPage(selectedPTE);
+    printf("invalid Test : %d\n", getPTEState(selectedPTE));
     free(pageIndexes);
     printf("mapping Process end\n");
     return 1;
