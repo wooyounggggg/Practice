@@ -81,6 +81,17 @@ void printAllPagesEntry()
     }
     printf("\n");
 }
+void printAllFreeList()
+{
+    FreeListElement *tmp = freeListHeader;
+    printf("free list : ");
+    while (tmp != NULL)
+    {
+        printf("%d ", tmp->PFN);
+        tmp = tmp->next;
+    }
+    printf("\n");
+}
 /* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
 void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
 {
@@ -167,6 +178,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     if (pageIndexes == NULL)
         return 0;
     printAllPagesEntry();
+    printAllFreeList();
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(PDE) == INVALID) /* if searched PTE is INVALID, */
@@ -189,6 +201,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         swapPage(PTE);
     /*  */ printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry)));
     printAllPagesEntry();
+    printAllFreeList();
     free(pageIndexes);
     return 1;
 }
