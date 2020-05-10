@@ -228,6 +228,10 @@ int mapTable(KU_PTE *parentPTE)
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
     /* 2. Get Entry of PFN found in seq 1*/
     char newEntry = getEntryByPFN(notUsingPFN);
+    /* test */
+    printf("Not Using PFN : %d\n", notUsingPFN);
+    printf("entry of not using pfn = %d\n", newEntry);
+    /* test */
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
     /* 4. Make new table : KU_PTE[4]*/
