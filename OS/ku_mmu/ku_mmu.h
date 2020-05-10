@@ -141,6 +141,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     if (pageIndexes == NULL)
         return 0;
     printf("mapping Process start\n");
+    printf("invalid Test : %d\n", getPTEState(selectedPTE));
     selectedPTE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(selectedPTE) == INVALID) /* if searched PTE is INVALID, */
@@ -189,7 +190,11 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
 void setDirToPmem(KU_PTE *notUsingPmem, KU_PTE *PDBR)
 {
     for (int i = 0; i < PAGE_OFFSET; i++)
+    {
         (notUsingPmem + i)->entry = (PDBR + i)->entry;
+        printf("set dir to pmem : %d\n", (notUsingPmem + i)->entry);
+        printf("set dir to pmem : %d\n", (PDBR + i)->entry);
+    }
 }
 int mapDirectory(KU_PTE *PDBR)
 {
