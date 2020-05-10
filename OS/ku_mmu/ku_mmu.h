@@ -70,15 +70,15 @@ int ku_page_fault(char, char);
 void *ku_mmu_init(unsigned int, unsigned int);
 int ku_run_proc(char, KU_PTE **);
 
-void printAllPagesFirstEntry()
+void printAllPagesEntry()
 {
     KU_PTE *tmp = pmem;
-    printf("entry : ");
     while (tmp - pmem <= 64)
     {
-        printf("%d ", tmp->entry);
+        printf("entry : %d %d %d %d\n", tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
         tmp += PAGE_OFFSET;
     }
+    printf("\n");
 }
 /* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
 void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
@@ -96,7 +96,7 @@ void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize r
         return 0;
     }
     initializeSwapSpace(swap_size);
-    printAllPagesFirstEntry();
+    printAllPagesEntry();
     return pmem;
 }
 int ku_run_proc(char pid, KU_PTE **ku_cr3) /* Performs Context Switch. If pid is new, function creates a process in virtual and its page directory */
@@ -157,20 +157,20 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     printf("pmem : %p\n", pmem);
     if (pageIndexes == NULL)
         return 0;
-    printAllPagesFirstEntry();
+    printAllPagesEntry();
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(PDE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(PDE);               /* map PTE referenced by selectedPTE */
     /*  */ printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry)));
-    printAllPagesFirstEntry();
+    printAllPagesEntry();
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
            pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(PMDE) == INVALID) /* if searched PTE is INVALID, */
         mapTable(PMDE);               /* map PTE referenced by selectedPTE */
     /*  */ printf("get Table addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PMDE->entry)));
-    printAllPagesFirstEntry();
+    printAllPagesEntry();
     PTE = getPageOrTableByPFN(getPFNByEntry(PMDE->entry)) + /* Search Page Directory entry */
           pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
@@ -179,7 +179,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     else if (getPTEState(PTE) == SWAPPED)
         swapPage(PTE);
     /*  */ printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry)));
-    printAllPagesFirstEntry();
+    printAllPagesEntry();
     free(pageIndexes);
     return 1;
 }
@@ -196,7 +196,6 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
         }
         PFN++;
         tmpPmem += PAGE_OFFSET;
-        printf("\nnot using pfn addr in funct : %p\n\n", tmpPmem);
     }
     PFN = freeListHeader->PFN;
     freeListHeader = freeListHeader->next;
@@ -217,9 +216,9 @@ int mapDirectory(KU_PTE *PDBR)
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
-    printf("Not Using PFN : %d\n", notUsingPFN);
     /* 2. Allocate Directory to pmem with no-use-PFN (pmem's entry = PDBR)*/
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
+    printf("Not Using PFN : %d\n", notUsingPFN);
     initializeTable(PDBR);
     if (notUsingPFNLocation == IN_PMEM)
         setDirToPmem(notUsingPmem, PDBR);
