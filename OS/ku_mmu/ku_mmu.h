@@ -137,6 +137,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
 {
     KU_PTE *selectedPTE;
     char *pageIndexes = getPageIndexesByVA(va);
+    printf("pageIndexes : %d %d %d %d\n", pageIndexes[0], pageIndexes[1], pageIndexes[2], pageIndexes[3]);
     if (pageIndexes == NULL)
         return 0;
     printf("mapping Process start\n");
