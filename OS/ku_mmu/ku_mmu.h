@@ -148,7 +148,6 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         return 0;
     printf("mapping Process start\n");
     printf("page directory first entry invalid Test : %d\n", getPTEState(pageDirectory));
-    /*  */ printf("page directory address : %p\n", pageDirectory);
     selectedPTE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     printf("page directory indexed entry invalid Test(before map) : %d\n", getPTEState(selectedPTE));
     /* page directory processing : selectedPTE = Page Directory */
@@ -243,6 +242,8 @@ int mapTable(KU_PTE *parentPTE)
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
+    printf("parent pte's entry : %d\n", parentPTE->entry);
+    printf("parent PTE's addr : %p\n", parentPTE);
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
     /* 5. Initialize new Table */
