@@ -25,6 +25,7 @@ typedef struct ku_pte
 typedef struct PCB
 {
     char pid;
+    char PFN;
     struct PCB *next;
     struct PCB *prev;
     KU_PTE *PDBR;
@@ -50,6 +51,7 @@ FreeListElement *addFreeListElement(KU_PTE *, char, FreeListElement *, FreeListE
 int setFreeListElement(FreeListElement *, KU_PTE *, char, FreeListElement *, FreeListElement *);
 PCB *addPCBElement(char);
 int setPCB(PCB *, PCB *, PCB *, char);
+PCB *getPCBByPDBR(KU_PTE *);
 PCB *getPCBByPid(char);
 int getPTEState(KU_PTE *);
 char *getPageIndexesByVA(char);
@@ -240,6 +242,7 @@ int mapDirectory(KU_PTE *PDBR)
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
     /* 2. Allocate Directory to pmem with no-use-PFN (pmem's entry = PDBR)*/
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
+    getPCBByPDBR(PDBR)->PFN = notUsingPFN;
     printf("Not Using PFN : %d\n", notUsingPFN);
     initializeTable(PDBR);
     if (notUsingPFNLocation == IN_PMEM)
@@ -269,7 +272,11 @@ int mapTable(KU_PTE *parentPTE)
     printf("newEntry : %d\n", newEntry);
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
-    setTableEntry(parentPTE, newEntry);
+    if (getPCBByPDBR(parentPTE) == NULL)
+        setTableEntry(parentPTE, newEntry);
+    else
+        setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry);
+
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
     /* 5. Initialize new Table */
@@ -432,6 +439,17 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
     }
     mapDirectory(newPCB->PDBR);
     return newPCB;
+}
+PCB *getPCBByPDBR(KU_PTE *PDBR)
+{
+    PCB *tmp = PCBHeader;
+    while (tmp != NULL)
+    {
+        if (tmp->PDBR == PDBR)
+            return tmp;
+        tmp = tmp->next;
+    }
+    return NULL;
 }
 PCB *getPCBByPid(char pid)
 {
