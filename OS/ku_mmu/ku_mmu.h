@@ -44,6 +44,7 @@ FreeListElement *freeListHeader = NULL; /* pmem에 Page를 삽입할 때 add되�
 void initializeSwapSpace(unsigned int);
 void initializePmem(unsigned int);
 void initializeTable(KU_PTE *);
+void initializePage(KU_PTE *);
 FreeListElement *getTrailerOfFreeList();
 FreeListElement *addFreeListElement(KU_PTE *, char, FreeListElement *, FreeListElement *);
 int setFreeListElement(FreeListElement *, KU_PTE *, char, FreeListElement *, FreeListElement *);
@@ -73,7 +74,7 @@ int ku_run_proc(char, KU_PTE **);
 void printAllPagesEntry()
 {
     KU_PTE *tmp = pmem;
-    while (tmp - pmem <= 64)
+    while (tmp - pmem < 64)
     {
         printf("entry : %d %d %d %d\n", tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
         tmp += PAGE_OFFSET;
@@ -146,6 +147,14 @@ void initializeTable(KU_PTE *pte)
     for (int i = 0; i < PAGE_OFFSET; i++)
     {
         pte->entry = 0x00;
+        pte++;
+    }
+}
+void initializePage(KU_PTE *pte)
+{
+    for (int i = 0; i < PAGE_OFFSET; i++)
+    {
+        pte->entry = -i;
         pte++;
     }
 }
@@ -280,7 +289,7 @@ int mapPage(KU_PTE *parentPTE)
     /* 4. Make new page : KU_PTE[4]*/
     KU_PTE *newPage = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
     /* 5. Initialize new Table */
-    initializeTable(newPage);
+    initializePage(newPage);
     /* 6. if 'not using location' is in pmem, allocate new table to pmem and add Free-list element with PFN*/
     if (notUsingPFNLocation == IN_PMEM)
     {
