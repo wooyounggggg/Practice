@@ -185,21 +185,30 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(PDE) == INVALID) /* if searched PTE is INVALID, */
-        mapTable(PDE);               /* map PTE referenced by selectedPTE */
+    {
+        mapTable(PDE); /* map PTE referenced by selectedPTE */
+        printf("mapping process middle dir test\n");
+    }
     /* printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry))); */
     printAllPagesEntry();
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
            pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(PMDE) == INVALID) /* if searched PTE is INVALID, */
-        mapTable(PMDE);               /* map PTE referenced by selectedPTE */
+    {
+        printf("mapping process table test\n");
+        mapTable(PMDE);
+    } /* map PTE referenced by selectedPTE */
     /* printf("get Table addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PMDE->entry))); */
     printAllPagesEntry();
     PTE = getPageOrTableByPFN(getPFNByEntry(PMDE->entry)) + /* Search Page Directory entry */
           pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
     if (getPTEState(PTE) == INVALID) /* if searched PTE is INVALID, */
-        mapPage(PTE);                /* map page referenced by selectedPTE */
+    {
+        printf("mapping process page test\n");
+        mapPage(PTE);
+    } /* map page referenced by selectedPTE */
     else if (getPTEState(PTE) == SWAPPED)
         swapPage(PTE);
     /* printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry))); */
