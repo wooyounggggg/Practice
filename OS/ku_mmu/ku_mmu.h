@@ -393,8 +393,11 @@ FreeListElement *getTrailerOfFreeList()
 {
     FreeListElement *tmp = freeListHeader;
     while (tmp != NULL)
+    {
         if (tmp->next == NULL)
             return tmp;
+        tmp = tmp->next;
+    }
     return tmp;
 }
 FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement *next, FreeListElement *prev)
