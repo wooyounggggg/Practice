@@ -335,7 +335,9 @@ int mapPage(KU_PTE *parentPTE)
     /* 6. if 'not using location' is in pmem, allocate new table to pmem and add Free-list element with PFN*/
     if (notUsingPFNLocation == IN_PMEM)
     {
+        printf("IN_PMEM test(before)\n");
         setPageToPmem(notUsingPmem, newPage);
+        printf("IN_PMEM test(after)\n");
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
     }
     /* 7. if 'not using location' is in free-list, swap it to swapSpace and allocate new table to pmem and Free-list element with PFN */
