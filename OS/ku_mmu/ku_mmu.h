@@ -456,7 +456,7 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
         free(newPCB->next);
         return NULL;
     }
-    mapDirectory(newPCB->PDBR);
+    mapDirectory(newPCB->next->PDBR);
     return newPCB;
 }
 PCB *getPCBByPDBR(KU_PTE *PDBR)
