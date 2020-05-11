@@ -73,6 +73,7 @@ int ku_page_fault(char, char);
 void *ku_mmu_init(unsigned int, unsigned int);
 int ku_run_proc(char, KU_PTE **);
 
+int testflag = 0;
 unsigned int pmemSize;
 unsigned int swapSize;
 void printAllPagesEntry()
@@ -236,6 +237,7 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
         if (tmpPmem->entry == 3)
         {
             *notUsingPFN = PFN;
+            printf("IN_PMEM_LIST test\n");
             return IN_PMEM;
         }
         PFN++;
@@ -245,6 +247,7 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
     freeListHeader = freeListHeader->next;
     free(freeListHeader->prev);
     *notUsingPFN = PFN;
+    printf("IN_FREE_LIST test\n");
     return IN_FREE_LIST;
 }
 /* Page Directory와 Page Middle Dir, Page Table 및 Page를 pmem에 적재해야 하는데, Page Directory는 PCB->PDBR로 적재를 하지 va를 통한 indexing으로 적재하지 않기 때문에,
@@ -319,6 +322,7 @@ int mapTable(KU_PTE *parentPTE)
 int mapPage(KU_PTE *parentPTE)
 {
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
+    testflag++;
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
@@ -348,6 +352,7 @@ int mapPage(KU_PTE *parentPTE)
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
     }
     free(newPage);
+    printf("testFlag = %d\n", testflag);
     return 1;
 }
 void setPageToPmem(KU_PTE *notUsingPmem, KU_PTE *page)
