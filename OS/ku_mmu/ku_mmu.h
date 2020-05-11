@@ -131,7 +131,7 @@ int ku_page_fault(char pid, char va)
     if (PCBByPid == NULL) /* if NULL, ku_run_proc err */
         return -1;
     /* 2. Page Directory ~ Page Mapping*/
-    printf("page directory test: %d %d %d %d \n",
+    printf("page directory test(before): %d %d %d %d \n",
            PCBByPid->PDBR->entry,
            ((PCBByPid->PDBR) + 1)->entry,
            ((PCBByPid->PDBR) + 2)->entry,
@@ -194,6 +194,11 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         mapTable(PDE); /* map PTE referenced by selectedPTE */
         printf("mapping process middle dir test\n");
     }
+    printf("page directory test(after): %d %d %d %d \n",
+           pageDirectory->entry,
+           ((pageDirectory) + 1)->entry,
+           ((pageDirectory) + 2)->entry,
+           ((pageDirectory) + 3)->entry);
     /* printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry))); */
     printAllPagesEntry();
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
