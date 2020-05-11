@@ -121,9 +121,7 @@ int ku_run_proc(char pid, KU_PTE **ku_cr3) /* Performs Context Switch. If pid is
         if ((PCBByPid = addPCBElement(pid)) == NULL)
             return -1;
     /* 2. map ku_cr3 to PCB's PDBR */
-    printf("ku_cr3 test : %p\n", *ku_cr3);
     *ku_cr3 = PCBByPid->PDBR;
-    printf("ku_cr3 test : %p\n", *ku_cr3);
     return 0;
 }
 int ku_page_fault(char pid, char va)
@@ -182,12 +180,11 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
 {
     KU_PTE *PDE, *PMDE, *PTE;
     char *pageIndexes = getPageIndexesByVA(va);
+    printf("----Top OF Mapping Process----\n");
     printf("pageIndexes : %d %d %d %d\n", pageIndexes[0], pageIndexes[1], pageIndexes[2], pageIndexes[3]);
-    printf("pmem : %p\n", pmem);
     if (pageIndexes == NULL)
         return 0;
     printAllPagesEntry();
-    printf("high free\n");
     printAllFreeList();
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
@@ -220,9 +217,9 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         swapPage(PTE);
     /* printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry))); */
     printAllPagesEntry();
-    printf("low free\n");
     printAllFreeList();
     free(pageIndexes);
+    printf("----Bottom OF Mapping Process----\n");
     return 1;
 }
 int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page. If no page of default, return FreeList's header PFN and move header to next */
@@ -335,11 +332,8 @@ int mapPage(KU_PTE *parentPTE)
     /* 6. if 'not using location' is in pmem, allocate new table to pmem and add Free-list element with PFN*/
     if (notUsingPFNLocation == IN_PMEM)
     {
-        printf("IN_PMEM test(before)\n");
         setPageToPmem(notUsingPmem, newPage);
-        printf("IN_PMEM test(after)\n");
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
-        printf("IN_PMEM test(after-after)\n");
     }
     /* 7. if 'not using location' is in free-list, swap it to swapSpace and allocate new table to pmem and Free-list element with PFN */
     else
@@ -417,11 +411,7 @@ FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement
         return freeListHeader;
     }
     while (newFreeListElement->next != NULL)
-    {
-        printf("addFreeListElementTest(in while) : %p\n", newFreeListElement);
         newFreeListElement = newFreeListElement->next;
-    }
-    printf("addFreeListElementTest(after while) : %p\n", newFreeListElement);
     newFreeListElement->next = (FreeListElement *)malloc(sizeof(FreeListElement));
     if (newFreeListElement->next == NULL)
         return NULL;
