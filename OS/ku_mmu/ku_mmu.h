@@ -73,12 +73,14 @@ int ku_page_fault(char, char);
 void *ku_mmu_init(unsigned int, unsigned int);
 int ku_run_proc(char, KU_PTE **);
 
+unsigned int pmemSize;
+unsigned int swapSize;
 void printAllPagesEntry()
 {
     KU_PTE *tmp = pmem;
-    while (tmp - pmem < 64)
+    while (tmp - pmem < 128)
     {
-        printf("entry%d : %d %d %d %d\n", (tmp - pmem) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
+        printf("table%d : %d %d %d %d\n", (tmp - pmem) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
         tmp += PAGE_OFFSET;
     }
     printf("\n");
@@ -98,6 +100,7 @@ void printAllFreeList()
 void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
 {
     /*1. Allocate memory space for pmem */
+    printf("pmem size : %d, swap size : %d\n", mem_size, swap_size);
     pmem = (KU_PTE *)malloc(sizeof(KU_PTE) * mem_size);
     if (pmem == NULL)
         return 0;
@@ -111,6 +114,8 @@ void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize r
     }
     initializeSwapSpace(swap_size);
     printAllPagesEntry();
+    pmemSize = mem_size;
+    swapSize = swap_size;
     return pmem;
 }
 int ku_run_proc(char pid, KU_PTE **ku_cr3) /* Performs Context Switch. If pid is new, function creates a process in virtual and its page directory */
@@ -159,6 +164,7 @@ void initializePmem(unsigned int mem_size)
             tmp->entry = 0x03;
         tmp += PAGE_OFFSET;
     }
+    tmp->entry = -1;
 }
 void initializeTable(KU_PTE *pte)
 {
