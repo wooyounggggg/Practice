@@ -296,10 +296,10 @@ int mapTable(KU_PTE *parentPTE)
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
-    /* if (getPCBByPDBR(parentPTE) == NULL)
+    if (getPCBByPDBR(parentPTE) == NULL)
         setTableEntry(parentPTE, newEntry);
     else
-        setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry); */
+        setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry);
 
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
@@ -469,7 +469,7 @@ PCB *getPCBByPDBR(KU_PTE *PDBR)
     PCB *tmp = PCBHeader;
     while (tmp != NULL)
     {
-        if (tmp->PDBR == PDBR)
+        if (tmp->PDBR == PDBR || tmp->PDBR + 1 == PDBR || tmp->PDBR + 2 == PDBR || tmp->PDBR + 3 == PDBR)
             return tmp;
         tmp = tmp->next;
     }
