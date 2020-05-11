@@ -164,7 +164,6 @@ void initializePmem(unsigned int mem_size)
             tmp->entry = 0x03;
         tmp += PAGE_OFFSET;
     }
-    tmp->entry = -1;
 }
 void initializeTable(KU_PTE *pte)
 {
@@ -232,7 +231,7 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
 {
     char PFN = 1;
     KU_PTE *tmpPmem = getPageOrTableByPFN(PFN);
-    while (tmpPmem != NULL) /* iterate pmem in first (for default pmem) */
+    while (PFN < pmemSize / 4) /* iterate pmem in first (for default pmem) */
     {
         if (tmpPmem->entry == 3)
         {
