@@ -339,6 +339,7 @@ int mapPage(KU_PTE *parentPTE)
         setPageToPmem(notUsingPmem, newPage);
         printf("IN_PMEM test(after)\n");
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
+        printf("IN_PMEM test(after-after)\n");
     }
     /* 7. if 'not using location' is in free-list, swap it to swapSpace and allocate new table to pmem and Free-list element with PFN */
     else
@@ -413,7 +414,11 @@ FreeListElement *addFreeListElement(KU_PTE *parentPTE, char PFN, FreeListElement
         return freeListHeader;
     }
     while (newFreeListElement->next != NULL)
+    {
+        printf("addFreeListElementTest(in while) : %p\n", newFreeListElement);
         newFreeListElement = newFreeListElement->next;
+    }
+    printf("addFreeListElementTest(after while) : %p\n", newFreeListElement);
     newFreeListElement->next = (FreeListElement *)malloc(sizeof(FreeListElement));
     if (newFreeListElement->next == NULL)
         return NULL;
