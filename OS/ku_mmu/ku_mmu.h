@@ -131,6 +131,11 @@ int ku_page_fault(char pid, char va)
     if (PCBByPid == NULL) /* if NULL, ku_run_proc err */
         return -1;
     /* 2. Page Directory ~ Page Mapping*/
+    printf("page directory test: %d %d %d %d \n",
+           PCBByPid->PDBR->entry,
+           ((PCBByPid->PDBR) + 1)->entry,
+           ((PCBByPid->PDBR) + 2)->entry,
+           ((PCBByPid->PDBR) + 3)->entry);
     if (mappingProcess(PCBByPid->PDBR, va))
         return 0;
     return -1; /* else return -1 */
