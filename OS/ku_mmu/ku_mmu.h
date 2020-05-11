@@ -121,7 +121,9 @@ int ku_run_proc(char pid, KU_PTE **ku_cr3) /* Performs Context Switch. If pid is
         if ((PCBByPid = addPCBElement(pid)) == NULL)
             return -1;
     /* 2. map ku_cr3 to PCB's PDBR */
+    printf("ku_cr3 test : %p\n", *ku_cr3);
     *ku_cr3 = PCBByPid->PDBR;
+    printf("ku_cr3 test : %p\n", *ku_cr3);
     return 0;
 }
 int ku_page_fault(char pid, char va)
