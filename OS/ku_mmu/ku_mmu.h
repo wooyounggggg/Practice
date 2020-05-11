@@ -78,7 +78,7 @@ void printAllPagesEntry()
     KU_PTE *tmp = pmem;
     while (tmp - pmem < 64)
     {
-        printf("entry : %d %d %d %d\n", tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
+        printf("entry%d : %d %d %d %d\n", (tmp - pmem) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
         tmp += PAGE_OFFSET;
     }
     printf("\n");
@@ -180,6 +180,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     if (pageIndexes == NULL)
         return 0;
     printAllPagesEntry();
+    printf("high free\n");
     printAllFreeList();
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
@@ -203,6 +204,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         swapPage(PTE);
     /* printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry))); */
     printAllPagesEntry();
+    printf("low free\n");
     printAllFreeList();
     free(pageIndexes);
     return 1;
@@ -242,8 +244,10 @@ int mapDirectory(KU_PTE *PDBR)
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
     /* 2. Allocate Directory to pmem with no-use-PFN (pmem's entry = PDBR)*/
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
+    char newEntry = getEntryByPFN(notUsingPFN);
     getPCBByPDBR(PDBR)->PFN = notUsingPFN;
     printf("Not Using PFN : %d\n", notUsingPFN);
+    printf("newEntry : %d\n", newEntry);
     initializeTable(PDBR);
     if (notUsingPFNLocation == IN_PMEM)
         setDirToPmem(notUsingPmem, PDBR);
@@ -272,10 +276,11 @@ int mapTable(KU_PTE *parentPTE)
     printf("newEntry : %d\n", newEntry);
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
-    if (getPCBByPDBR(parentPTE) == NULL)
+    setTableEntry(parentPTE, newEntry);
+    /* if (getPCBByPDBR(parentPTE) == NULL)
         setTableEntry(parentPTE, newEntry);
     else
-        setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry);
+        setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry); */
 
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
