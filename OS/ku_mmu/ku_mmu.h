@@ -292,7 +292,13 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
         PFN++;
         tmpPmem += PAGE_OFFSET;
     }
-    PFN = freeListHeader->PFN;
+    if (freeListHeader != NULL)
+        PFN = freeListHeader->PFN;
+    else
+    {
+        perror("no available mem space");
+        exit(0);
+    }
     /* freeListHeader = freeListHeader->next;
     free(freeListHeader->prev); */
     *notUsingPFN = PFN;
