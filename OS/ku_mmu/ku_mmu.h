@@ -82,12 +82,19 @@ int ku_run_proc(char, KU_PTE **);
 int testflag = 0;
 unsigned int pmemSize;
 unsigned int swapSize;
-void printAllPagesEntry()
+void printAllPmemAndSwap()
 {
     KU_PTE *tmp = pmem;
-    while (tmp - pmem < 128)
+    while (tmp - pmem < pmemSize)
     {
         printf("table%d : %d %d %d %d\n", (tmp - pmem) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
+        tmp += PAGE_OFFSET;
+    }
+    printf("\n");
+    tmp = swapSpace;
+    while (tmp - swapSpace < swapSize)
+    {
+        printf("swap%d : %d %d %d %d\n", (tmp - swapSpace) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
         tmp += PAGE_OFFSET;
     }
     printf("\n");
@@ -121,7 +128,7 @@ void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize r
     }
     initializeSwapSpace(swap_size);
     printf("differ between pmem~swap : %d\n", swapSpace - pmem);
-    printAllPagesEntry();
+    printAllPmemAndSwap();
     pmemSize = mem_size;
     swapSize = swap_size;
     return pmem;
@@ -197,7 +204,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     printf("pageIndexes : %d %d %d %d\n", pageIndexes[0], pageIndexes[1], pageIndexes[2], pageIndexes[3]);
     if (pageIndexes == NULL)
         return 0;
-    printAllPagesEntry();
+    printAllPmemAndSwap();
     printAllFreeList();
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
@@ -207,7 +214,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         printf("mapping process middle dir test\n");
     }
     /* printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry))); */
-    printAllPagesEntry();
+    printAllPmemAndSwap();
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
            pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
@@ -217,7 +224,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         mapTable(PMDE);
     } /* map PTE referenced by selectedPTE */
     /* printf("get Table addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PMDE->entry))); */
-    printAllPagesEntry();
+    printAllPmemAndSwap();
     PTE = getPageOrTableByPFN(getPFNByEntry(PMDE->entry)) + /* Search Page Directory entry */
           pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
@@ -239,7 +246,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         }
     }
     /* printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry))); */
-    printAllPagesEntry();
+    printAllPmemAndSwap();
     printAllFreeList();
     free(pageIndexes);
     printf("----Bottom OF Mapping Process----\n");
