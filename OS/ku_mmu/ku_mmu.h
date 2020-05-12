@@ -163,6 +163,10 @@ int ku_page_fault(char pid, char va)
 void initializeSwapSpace(unsigned int swap_size)
 {
     KU_PTE *tmp = swapSpace;
+    swapSpace->entry = -1;
+    (swapSpace + 1)->entry = -1;
+    (swapSpace + 2)->entry = -1;
+    (swapSpace + 3)->entry = -1;
     for (int i = 0; i < swap_size; i += PAGE_OFFSET)
     {
         if (i != 0)
@@ -173,6 +177,10 @@ void initializeSwapSpace(unsigned int swap_size)
 void initializePmem(unsigned int mem_size)
 {
     KU_PTE *tmp = pmem;
+    pmem->entry = -1;
+    (pmem + 1)->entry = -1;
+    (pmem + 2)->entry = -1;
+    (pmem + 3)->entry = -1;
     for (int i = 0; i < mem_size; i += PAGE_OFFSET)
     {
         if (i != 0)
@@ -238,7 +246,9 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
         char notUsingPFN;
         int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
         if (notUsingPFNLocation == IN_PMEM)
+        {
             swapPageIn(PTE);
+        }
         else /* 해당 경우는 mapping 하려는 page가 swapped 되어 있고, pmem이 꽉차있는 경우여서 page간 swapping 해야함 */
         {
             swapPageOut(notUsingPFN);
@@ -406,35 +416,31 @@ int swapPageIn(KU_PTE *pte)
 }
 int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-list search 해야함. */
 {
-    printf("swap page test(before)\n");
     /* 1.getFreeListElementByPFN */
     char notUsingSwapNum;
-    printf("swapPageOut test 1\n");
     FreeListElement *FLEByPFN = getFreeListElementByPFN(notUsingPFN);
-    printf("swapPageOut test 2\n");
     if (FLEByPFN == NULL)
         return 0;
-    printf("swapPageOut test 3\n");
     /* 2.get parentPTE from free-list-element gotten in seq 1 */
     KU_PTE *parentPTE = FLEByPFN->parentPTE;
-    printf("swapPageOut test 4\n");
     /* 3.get Swap Space which is not used(getNotUsingSwapInfo) */
     KU_PTE *notUsingSwapSpace = getNotUsingSwapInfo(&notUsingSwapNum);
-    printf("swapPageOut test 5\n");
     /* 4.set parentPTE with swap offset which the child page allocated in */
     char newEntry = getEntryBySwapNum(notUsingSwapNum);
-    printf("swapPageOut test 6\n");
     setTableEntry(parentPTE, newEntry);
-    printf("swapPageOut test 7\n");
     /* 5. set page to swap space with swap num*/
     getSwapSpaceBySwapNum(notUsingSwapNum);
-    printf("swapPageOut test 8\n");
     setPageToPmem(notUsingSwapSpace, getPageOrTableByPFN(notUsingPFN));
-    printf("swapPageOut test 9\n");
-    freeListHeader = freeListHeader->next;
-    printf("swapPageOut test 10\n");
-    free(freeListHeader->prev);
-    printf("swap page test(after)\n");
+    if (freeListHeader->next != NULL)
+    {
+        freeListHeader = freeListHeader->next;
+        free(freeListHeader->prev);
+    }
+    else
+    {
+        free(freeListHeader);
+        freeListHeader = NULL;
+    }
     return 1;
 }
 void setTableEntry(KU_PTE *pte, char entry)
