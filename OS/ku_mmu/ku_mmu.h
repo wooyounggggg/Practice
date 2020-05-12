@@ -409,20 +409,30 @@ int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-
     printf("swap page test(before)\n");
     /* 1.getFreeListElementByPFN */
     char notUsingSwapNum;
+    printf("swapPageOut test 1\n");
     FreeListElement *FLEByPFN = getFreeListElementByPFN(notUsingPFN);
+    printf("swapPageOut test 2\n");
     if (FLEByPFN == NULL)
         return 0;
+    printf("swapPageOut test 3\n");
     /* 2.get parentPTE from free-list-element gotten in seq 1 */
     KU_PTE *parentPTE = FLEByPFN->parentPTE;
+    printf("swapPageOut test 4\n");
     /* 3.get Swap Space which is not used(getNotUsingSwapInfo) */
     KU_PTE *notUsingSwapSpace = getNotUsingSwapInfo(&notUsingSwapNum);
+    printf("swapPageOut test 5\n");
     /* 4.set parentPTE with swap offset which the child page allocated in */
     char newEntry = getEntryBySwapNum(notUsingSwapNum);
+    printf("swapPageOut test 6\n");
     setTableEntry(parentPTE, newEntry);
+    printf("swapPageOut test 7\n");
     /* 5. set page to swap space with swap num*/
     getSwapSpaceBySwapNum(notUsingSwapNum);
+    printf("swapPageOut test 8\n");
     setPageToPmem(notUsingSwapSpace, getPageOrTableByPFN(notUsingPFN));
+    printf("swapPageOut test 9\n");
     freeListHeader = freeListHeader->next;
+    printf("swapPageOut test 10\n");
     free(freeListHeader->prev);
     printf("swap page test(after)\n");
     return 1;
