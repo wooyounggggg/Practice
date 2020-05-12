@@ -348,6 +348,7 @@ int mapPage(KU_PTE *parentPTE)
     else
     {
         swapPage(notUsingPmem);
+        printf("FREE_LIST else test");
         setPageToPmem(notUsingPmem, newPage);
         addFreeListElement(newPage, notUsingPFN, NULL, getTrailerOfFreeList());
     }
@@ -362,6 +363,7 @@ void setPageToPmem(KU_PTE *notUsingPmem, KU_PTE *page)
 }
 int swapPage(KU_PTE *parentPTE)
 {
+    printf("swap page test\n");
 }
 void setTableEntry(KU_PTE *pte, char entry)
 {
