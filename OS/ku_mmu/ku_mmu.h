@@ -120,6 +120,7 @@ void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize r
         return 0;
     }
     initializeSwapSpace(swap_size);
+    printf("differ between pmem~swap : %d\n", swapSpace - pmem);
     printAllPagesEntry();
     pmemSize = mem_size;
     swapSize = swap_size;
