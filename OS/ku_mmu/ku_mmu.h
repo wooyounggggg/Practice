@@ -83,39 +83,10 @@ int ku_run_proc(char, KU_PTE **);
 int testflag = 0;
 unsigned int pmemSize;
 unsigned int swapSize;
-void printAllPmemAndSwap()
-{
-    KU_PTE *tmp = pmem;
-    while (tmp - pmem < pmemSize)
-    {
-        printf("table%d : %d %d %d %d\n", (tmp - pmem) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
-        tmp += PAGE_OFFSET;
-    }
-    printf("\n");
-    tmp = swapSpace;
-    while (tmp - swapSpace < swapSize)
-    {
-        printf("swap%d : %d %d %d %d\n", (tmp - swapSpace) / 4, tmp->entry, (tmp + 1)->entry, (tmp + 2)->entry, (tmp + 3)->entry);
-        tmp += PAGE_OFFSET;
-    }
-    printf("\n");
-}
-void printAllFreeList()
-{
-    FreeListElement *tmp = freeListHeader;
-    printf("free list : ");
-    while (tmp != NULL)
-    {
-        printf("%d ", tmp->PFN);
-        tmp = tmp->next;
-    }
-    printf("\n");
-}
 /* handle page fault by 'demand page' or 'swapping(FIFO)'. Page Directory and Page Table not swapped out */
 void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize resource. called only once in starting. */
 {
     /*1. Allocate memory space for pmem */
-    printf("pmem size : %d, swap size : %d\n", mem_size, swap_size);
     pmem = (KU_PTE *)malloc(sizeof(KU_PTE) * mem_size);
     if (pmem == NULL)
         return 0;
@@ -128,8 +99,6 @@ void *ku_mmu_init(unsigned int mem_size, unsigned int swap_size) /* initialize r
         return 0;
     }
     initializeSwapSpace(swap_size);
-    printf("differ between pmem~swap : %d\n", swapSpace - pmem);
-    printAllPmemAndSwap();
     pmemSize = mem_size;
     swapSize = swap_size;
     return pmem;
@@ -152,11 +121,6 @@ int ku_page_fault(char pid, char va)
     if (PCBByPid == NULL) /* if NULL, ku_run_proc err */
         return -1;
     /* 2. Page Directory ~ Page Mapping*/
-    printf("page directory test: %d %d %d %d \n",
-           PCBByPid->PDBR->entry,
-           ((PCBByPid->PDBR) + 1)->entry,
-           ((PCBByPid->PDBR) + 2)->entry,
-           ((PCBByPid->PDBR) + 3)->entry);
     if (mappingProcess(PCBByPid->PDBR, va))
         return 0;
     return -1; /* else return -1 */
@@ -209,39 +173,25 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
 {
     KU_PTE *PDE, *PMDE, *PTE;
     char *pageIndexes = getPageIndexesByVA(va);
-    printf("----Top OF Mapping Process----\n");
-    printf("pageIndexes : %d %d %d %d\n", pageIndexes[0], pageIndexes[1], pageIndexes[2], pageIndexes[3]);
     if (pageIndexes == NULL)
         return 0;
-    printAllPmemAndSwap();
-    printAllFreeList();
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(PDE) == INVALID) /* if searched PTE is INVALID, */
-    {
-        mapTable(PDE); /* map PTE referenced by selectedPTE */
-        printf("mapping process middle dir test\n");
-    }
-    /* printf("get Middle Directory addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PDE->entry))); */
-    printAllPmemAndSwap();
+        mapTable(PDE);               /* map PTE referenced by selectedPTE */
+
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
            pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(PMDE) == INVALID) /* if searched PTE is INVALID, */
-    {
-        printf("mapping process table test\n");
         mapTable(PMDE);
-    } /* map PTE referenced by selectedPTE */
-    /* printf("get Table addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PMDE->entry))); */
-    printAllPmemAndSwap();
+    /* map PTE referenced by selectedPTE */
     PTE = getPageOrTableByPFN(getPFNByEntry(PMDE->entry)) + /* Search Page Directory entry */
           pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
     if (getPTEState(PTE) == INVALID) /* if searched PTE is INVALID, */
-    {
-        printf("mapping process page test\n");
         mapPage(PTE);
-    } /* map page referenced by selectedPTE */
+    /* map page referenced by selectedPTE */
     else if (getPTEState(PTE) == SWAPPED)
         swapBeetweenPage(PTE);
 
@@ -249,11 +199,7 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     /* char notUsingPFN;
         int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN); */
 
-    /* printf("get Page addr by PFN : %p\n", getPageOrTableByPFN(getPFNByEntry(PTE->entry))); */
-    printAllPmemAndSwap();
-    printAllFreeList();
     free(pageIndexes);
-    printf("----Bottom OF Mapping Process----\n");
     return 1;
 }
 KU_PTE *getNotUsingSwapInfo(char *notUsingSwapNum)
@@ -280,7 +226,6 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
         if (tmpPmem->entry == 3)
         {
             *notUsingPFN = PFN;
-            printf("IN_PMEM_LIST test\n");
             return IN_PMEM;
         }
         PFN++;
@@ -296,11 +241,8 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
     /* freeListHeader = freeListHeader->next;
     free(freeListHeader->prev); */
     *notUsingPFN = PFN;
-    printf("IN_FREE_LIST test\n");
     return IN_FREE_LIST;
 }
-/* Page Directory와 Page Middle Dir, Page Table 및 Page를 pmem에 적재해야 하는데, Page Directory는 PCB->PDBR로 적재를 하지 va를 통한 indexing으로 적재하지 않기 때문에,
-이를 고려하여서 분기로 적재해주거나 따로 함수를 하나 만들어야 함. addPCBElement에 Page Directory를 대상으로 mapPageOrTable을 수행하기는 했으나, 논리가 완성되지 않음. */
 void setDirToPmem(KU_PTE *notUsingPmem, KU_PTE *PDBR)
 {
     for (int i = 0; i < PAGE_OFFSET; i++)
@@ -308,7 +250,6 @@ void setDirToPmem(KU_PTE *notUsingPmem, KU_PTE *PDBR)
 }
 int mapDirectory(KU_PTE *PDBR)
 {
-    /* Directory에 대한 정보는 PCB에서 갖고 있기 때문에, PFN을 통해 Dir에 접근할 필요 없음 */
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
@@ -316,8 +257,6 @@ int mapDirectory(KU_PTE *PDBR)
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
     char newEntry = getEntryByPFN(notUsingPFN);
     getPCBByPDBR(PDBR)->PFN = notUsingPFN;
-    printf("Not Using PFN : %d\n", notUsingPFN);
-    printf("newEntry : %d\n", newEntry);
     initializeTable(PDBR);
     if (notUsingPFNLocation == IN_PMEM)
         setDirToPmem(notUsingPmem, PDBR);
@@ -342,16 +281,9 @@ int mapTable(KU_PTE *parentPTE)
     /* 2. Get Entry of PFN found in seq 1*/
     char newEntry = getEntryByPFN(notUsingPFN);
     /* test */
-    printf("Not Using PFN : %d\n", notUsingPFN);
-    printf("newEntry : %d\n", newEntry);
     /* test */
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
-    /* if (getPCBByPDBR(parentPTE) == NULL)
-        setTableEntry(parentPTE, newEntry);
-    else
-        setTableEntry(getPageOrTableByPFN(getPCBByPDBR(parentPTE)->PFN), newEntry); */
-
     /* 4. Make new table : KU_PTE[4]*/
     KU_PTE *newTable = (KU_PTE *)malloc(sizeof(KU_PTE) * PAGE_OFFSET);
     /* 5. Initialize new Table */
@@ -377,10 +309,6 @@ int mapPage(KU_PTE *parentPTE)
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
     /* 2. Get Entry of PFN found in seq 1*/
     char newEntry = getEntryByPFN(notUsingPFN);
-    /* test */
-    printf("Not Using PFN : %d\n", notUsingPFN);
-    printf("newEntry : %d\n", newEntry);
-    /* test */
     /* 3. Allocate that entry to parent's PTE*/
     setTableEntry(parentPTE, newEntry);
     /* 4. Make new page : KU_PTE[4]*/
@@ -397,12 +325,10 @@ int mapPage(KU_PTE *parentPTE)
     else
     {
         swapPageOut(notUsingPFN);
-        printf("FREE_LIST else test");
         setPageToPmem(notUsingPmem, newPage);
         addFreeListElement(parentPTE, notUsingPFN, NULL, getTrailerOfFreeList());
     }
     free(newPage);
-    printf("testFlag = %d\n", testflag);
     return 1;
 }
 void setPageToPmem(KU_PTE *notUsingPmem, KU_PTE *page)
@@ -422,9 +348,6 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
     FreeListElement *FLEByPFN = getFreeListElementByPFN(notUsingPFN);
     KU_PTE *notUsingParentPTE;
     notUsingParentPTE = FLEByPFN->parentPTE;
-    /* if (FLEByPFN != NULL) */
-    /* else
-        perror("no available mem space_2"); */
     /* 3-2. get notUsingPage in pmem */
     KU_PTE *notUsingPage = getPageOrTableByPFN(notUsingPFN);
     /* 4. swap entry between swapSpaceParentPTE and notUsingParentPTE*/
@@ -636,8 +559,6 @@ int getPTEState(KU_PTE *PTE)
         return PRESENT;
     else if (!(PTE->entry & 0x01) && (PTE->entry >> 1)) /* if Present bit is 0 and Swap Offset > 0, return SWAPPED */
         return SWAPPED;
-    /* else if (PTE->entry & 0x03)
-        return PAGE; /* 0000 0011 for default page */
 }
 char *getPageIndexesByVA(char va)
 {
