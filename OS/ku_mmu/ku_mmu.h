@@ -178,22 +178,25 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
     PDE = pageDirectory + pageIndexes[PDE_INDEX]; /* Search Page Directory Entry */
     /* page directory processing : selectedPTE = Page Directory */
     if (getPTEState(PDE) == INVALID) /* if searched PTE is INVALID, */
-        mapTable(PDE);               /* map PTE referenced by selectedPTE */
+        if (mapTable(PDE) == 0)      /* map PTE referenced by selectedPTE */
+            return 0;
 
     PMDE = getPageOrTableByPFN(getPFNByEntry(PDE->entry)) + /* Search Page Middle Directory entry */
            pageIndexes[PMDE_INDEX];
     /* page middle directory processing : selectedPTE = Page Middle Directory*/
     if (getPTEState(PMDE) == INVALID) /* if searched PTE is INVALID, */
-        mapTable(PMDE);
-    /* map PTE referenced by selectedPTE */
+        if (mapTable(PMDE) == 0)      /* map PTE referenced by selectedPTE */
+            return 0;
     PTE = getPageOrTableByPFN(getPFNByEntry(PMDE->entry)) + /* Search Page Directory entry */
           pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
     if (getPTEState(PTE) == INVALID) /* if searched PTE is INVALID, */
-        mapPage(PTE);
-    /* map page referenced by selectedPTE */
-    else if (getPTEState(PTE) == SWAPPED)
-        swapBeetweenPage(PTE);
+        if (mapPage(PTE) == 0)
+            return 0;
+        /* map page referenced by selectedPTE */
+        else if (getPTEState(PTE) == SWAPPED)
+            if (swapBeetweenPage(PTE) == 0)
+                return 0;
 
     /* 해당 경우는 mapping 하려는 page가 swapped 되어 있고, pmem이 꽉차있는 경우여서 page간 swapping 해야함 */
     /* char notUsingPFN;
@@ -234,10 +237,7 @@ int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page
     if (freeListHeader != NULL)
         PFN = freeListHeader->PFN;
     else
-    {
-        perror("no available mem space");
-        exit(0);
-    }
+        return -1;
     /* freeListHeader = freeListHeader->next;
     free(freeListHeader->prev); */
     *notUsingPFN = PFN;
@@ -253,6 +253,8 @@ int mapDirectory(KU_PTE *PDBR)
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
+    if (notUsingPFNLocation == -1)
+        return 0;
     /* 2. Allocate Directory to pmem with no-use-PFN (pmem's entry = PDBR)*/
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
     char newEntry = getEntryByPFN(notUsingPFN);
@@ -277,6 +279,8 @@ int mapTable(KU_PTE *parentPTE)
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
+    if (notUsingPFNLocation == -1)
+        return 0;
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
     /* 2. Get Entry of PFN found in seq 1*/
     char newEntry = getEntryByPFN(notUsingPFN);
@@ -306,6 +310,8 @@ int mapPage(KU_PTE *parentPTE)
     testflag++;
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
+    if (notUsingPFNLocation == -1)
+        return 0;
     KU_PTE *notUsingPmem = getPageOrTableByPFN(notUsingPFN);
     /* 2. Get Entry of PFN found in seq 1*/
     char newEntry = getEntryByPFN(notUsingPFN);
@@ -344,6 +350,8 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
     /* 2. get notUsingPFN in pmem*/
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
+    if (notUsingPFNLocation == -1)
+        return 0;
     /* 3-1. get and remove notUsingPFN's parentPTE in free-list*/
     FreeListElement *FLEByPFN = getFreeListElementByPFN(notUsingPFN);
     KU_PTE *notUsingParentPTE;
@@ -513,7 +521,8 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
             free(PCBHeader);
             return NULL;
         }
-        mapDirectory(PCBHeader->PDBR);
+        if (mapDirectory(PCBHeader->PDBR) == 0)
+            return NULL;
         return PCBHeader;
     }
     while (newPCB->next != NULL)
@@ -526,7 +535,8 @@ PCB *addPCBElement(char pid) /* add Process' PCB element and map PDBR to pmem */
         free(newPCB->next);
         return NULL;
     }
-    mapDirectory(newPCB->next->PDBR);
+    if (mapDirectory(newPCB->next->PDBR) == 0)
+        return NULL;
     return newPCB->next;
 }
 PCB *getPCBByPDBR(KU_PTE *PDBR)
