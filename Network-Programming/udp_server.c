@@ -18,12 +18,20 @@ int main(void)
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons(4000);
     serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    bindState = bind(serverSocket, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
-    if (bindState == -1)
+    int client_addr_size = sizeof(client_addr);
+    memset(&server_addr, 0, sizeof(server_addr));
+    if (serverSocket == -1)
     {
-        perror("execution error\n");
+        perror("socket error");
         exit(1);
     }
+    bindState = bind(serverSocket, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (bindState == -1)
+    {
+        perror("bind error\n");
+        exit(1);
+    }
+    recvfrom(serverSocket, buf, BUFF_SIZE, 0, (struct sockaddr *)&client_addr, &client_addr_size);
 
     return 0;
 }
