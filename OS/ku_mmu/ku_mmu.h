@@ -414,6 +414,7 @@ void setPageToPmem(KU_PTE *notUsingPmem, KU_PTE *page)
 int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
 {
     /* 1. get swap space by swapSpaceParentPTE*/
+    printf("swap beetween page\n");
     KU_PTE *swapSpacePage = getSwapSpacePageBySwapNum(getSwapNumByEntry(swapSpaceParentPTE->entry));
     /* 2. get notUsingPFN in pmem*/
     char notUsingPFN;
@@ -440,6 +441,7 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
     }
     /* 6. add FreeListElement for swap-in page */
     addFreeListElement(notUsingPage, notUsingPFN, NULL, getTrailerOfFreeList());
+    popFreeListElement();
 }
 int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-list search 해야함. */
 {
