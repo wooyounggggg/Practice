@@ -375,7 +375,7 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
         setTableEntry(notUsingPage + i, tmpEntry);
     }
     /* 6. add FreeListElement for swap-in page */
-    addFreeListElement(notUsingPage, notUsingPFN, NULL, getTrailerOfFreeList());
+    addFreeListElement(swapSpaceParentPTE, notUsingPFN, NULL, getTrailerOfFreeList());
     return 1;
 }
 int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-list search 해야함. */
