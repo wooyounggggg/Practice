@@ -41,13 +41,10 @@ int main(void)
 
     while (strcmp(buff_rcv, "0x1A") != 0)
     {
-        printf("test\n");
         client_addr_size = sizeof(client_addr);
         recvfrom(serverSocket, buff_rcv, BUFF_SIZE, 0,
                  (struct sockaddr *)&client_addr, &client_addr_size);
-        printf("%d byte data (seq %d) received.", client_addr_size, seq);
-
-        sprintf(buff_snd, "%s", buff_rcv, buff_rcv);
+        printf("%ld byte data (seq %d) received.\n", strlen(buff_rcv), seq);
         sendto(serverSocket, buff_snd, strlen(buff_snd) + 1, 0, // +1: NULL까지 포함해서 전송
                (struct sockaddr *)&client_addr, sizeof(client_addr));
         seq++;

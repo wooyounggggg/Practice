@@ -53,8 +53,8 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    /* sendto(serverSocket, "0x1A", strlen("0x1A") + 1, 0, // +1: NULL까지 포함해서 전송
-           (struct sockaddr *)&server_addr, sizeof(server_addr)); */
+    sendto(serverSocket, "0x1A", strlen("0x1A") + 1, 0, // +1: NULL까지 포함해서 전송
+           (struct sockaddr *)&server_addr, sizeof(server_addr));
     close(serverSocket);
 
     return 0;
