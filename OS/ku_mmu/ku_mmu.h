@@ -191,12 +191,14 @@ int mappingProcess(KU_PTE *pageDirectory, char va) /* map Page Directory ~ Page 
           pageIndexes[PTE_INDEX];
     /* page table processing : selectedPTE = Page Table*/
     if (getPTEState(PTE) == INVALID) /* if searched PTE is INVALID, */
+    {
         if (mapPage(PTE) == 0)
             return 0;
-        /* map page referenced by selectedPTE */
-        else if (getPTEState(PTE) == SWAPPED)
-            if (swapBeetweenPage(PTE) == 0)
-                return 0;
+    }
+    /* map page referenced by selectedPTE */
+    else if (getPTEState(PTE) == SWAPPED)
+        if (swapBeetweenPage(PTE) == 0)
+            return 0;
 
     /* 해당 경우는 mapping 하려는 page가 swapped 되어 있고, pmem이 꽉차있는 경우여서 page간 swapping 해야함 */
     /* char notUsingPFN;
@@ -219,6 +221,7 @@ KU_PTE *getNotUsingSwapInfo(char *notUsingSwapNum)
         swapNum++;
         tmpSwapSpace += PAGE_OFFSET;
     }
+    return NULL;
 }
 int getNotUsingPFN(char *notUsingPFN) /* Iterating pmem, find default state page. If no page of default, return FreeList's header PFN and move header to next */
 {
@@ -264,7 +267,8 @@ int mapDirectory(KU_PTE *PDBR)
         setDirToPmem(notUsingPmem, PDBR);
     else
     {
-        swapPageOut(notUsingPFN);
+        if (swapPageOut(notUsingPFN) == 0)
+            return 0;
         setDirToPmem(notUsingPmem, PDBR);
     }
     return 1;
@@ -298,7 +302,8 @@ int mapTable(KU_PTE *parentPTE)
     /* 7. if 'not using location' is in free-list, swap it to swapSpace and allocate new table to pmem */
     else
     {
-        swapPageOut(notUsingPFN);
+        if (swapPageOut(notUsingPFN) == 0)
+            return 0;
         setTableToPmem(notUsingPmem, newTable);
     }
     free(newTable);
@@ -307,7 +312,6 @@ int mapTable(KU_PTE *parentPTE)
 int mapPage(KU_PTE *parentPTE)
 {
     /* 1. Get PFN of being not used space or FIFO-page(getNoUsingPFN function) */
-    testflag++;
     char notUsingPFN;
     int notUsingPFNLocation = getNotUsingPFN(&notUsingPFN);
     if (notUsingPFNLocation == -1)
@@ -330,7 +334,8 @@ int mapPage(KU_PTE *parentPTE)
     /* 7. if 'not using location' is in free-list, swap it to swapSpace and allocate new table to pmem and Free-list element with PFN */
     else
     {
-        swapPageOut(notUsingPFN);
+        if (swapPageOut(notUsingPFN) == 0)
+            return 0;
         setPageToPmem(notUsingPmem, newPage);
         addFreeListElement(parentPTE, notUsingPFN, NULL, getTrailerOfFreeList());
     }
@@ -371,6 +376,7 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
     }
     /* 6. add FreeListElement for swap-in page */
     addFreeListElement(notUsingPage, notUsingPFN, NULL, getTrailerOfFreeList());
+    return 1;
 }
 int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-list search 해야함. */
 {
@@ -383,6 +389,8 @@ int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-
     KU_PTE *parentPTE = FLEByPFN->parentPTE;
     /* 3.get Swap Space which is not used(getNotUsingSwapInfo) */
     KU_PTE *notUsingSwapSpace = getNotUsingSwapInfo(&notUsingSwapNum);
+    if (notUsingSwapSpace == NULL)
+        return 0;
     /* 4.set parentPTE with swap offset which the child page allocated in */
     char newEntry = getEntryBySwapNum(notUsingSwapNum);
     setTableEntry(parentPTE, newEntry);
