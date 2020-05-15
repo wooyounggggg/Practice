@@ -103,10 +103,19 @@ void printAllPmemAndSwap()
 void printAllFreeList()
 {
     FreeListElement *tmp = freeListHeader;
-    printf("free list : ");
+    printf("============= free list =============\n");
+    printf("PFN : ");
     while (tmp != NULL)
     {
         printf("%d ", tmp->PFN);
+        tmp = tmp->next;
+    }
+    tmp = freeListHeader;
+    printf("\n");
+    printf("PTE : ");
+    while (tmp != NULL)
+    {
+        printf("%d ", tmp->parentPTE->entry);
         tmp = tmp->next;
     }
     printf("\n");
@@ -415,6 +424,7 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
 {
     /* 1. get swap space by swapSpaceParentPTE*/
     printf("swap beetween page\n");
+    printf("swap parent pte : %d\n", swapSpaceParentPTE->entry);
     KU_PTE *swapSpacePage = getSwapSpacePageBySwapNum(getSwapNumByEntry(swapSpaceParentPTE->entry));
     /* 2. get notUsingPFN in pmem*/
     char notUsingPFN;
@@ -432,25 +442,35 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
     printf("\n\n\n\n 111111111111111111111111\n");
     printAllPmemAndSwap();
     printf("\n\n\n\n");
+    printAllFreeList();
     char tmpEntry = swapSpaceParentPTE->entry;
     setTableEntry(swapSpaceParentPTE, notUsingParentPTE->entry);
+    printAllFreeList();
     setTableEntry(notUsingParentPTE, tmpEntry);
+    printAllFreeList();
     printf("\n\n\n\n 222222222222222222222222");
     printAllPmemAndSwap();
     printf("\n\n\n\n");
+    printAllFreeList();
     /* 5. swap 2page's entry */
     for (int i = 0; i < PAGE_OFFSET; i++)
     {
         tmpEntry = (swapSpacePage + i)->entry;
+        printAllFreeList();
         setTableEntry(swapSpacePage + i, (notUsingPage + i)->entry);
+        printAllFreeList();
         setTableEntry(notUsingPage + i, tmpEntry);
     }
     printf("\n\n\n\n3333333333333333333333333");
     printAllPmemAndSwap();
     printf("\n\n\n\n");
     /* 6. add FreeListElement for swap-in page */
-    addFreeListElement(notUsingPage, notUsingPFN, NULL, getTrailerOfFreeList());
+    printAllFreeList();
+    printf("notUsingPFN : %d\n", notUsingPFN);
+    addFreeListElement(swapSpaceParentPTE, notUsingPFN, NULL, getTrailerOfFreeList());
+    printAllFreeList();
     popFreeListElement();
+    printAllFreeList();
 }
 int swapPageOut(char notUsingPFN) /* PTE가 아니라, PFN을 넘겨줘서 free-list search 해야함. */
 {
