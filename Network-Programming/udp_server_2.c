@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 #define BUFF_SIZE 4096
 
@@ -13,7 +14,7 @@ int main(void)
     int seq = 1;
     int serverSocket;
     int client_addr_size;
-
+    int fd;
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr;
 
@@ -38,16 +39,26 @@ int main(void)
         printf("bind() 실행 에러n");
         exit(1);
     }
-
-    while (strcmp(buff_rcv, "0x1A") != 0)
+    fd = open("./result.txt", O_RDWR | O_CREAT | O_APPEND, 0644);
+    if (fd < 0)
+    {
+        printf("파일 열기에 실패했습니다.\n");
+        return 0;
+    }
+    while (1)
     {
         client_addr_size = sizeof(client_addr);
         recvfrom(serverSocket, buff_rcv, BUFF_SIZE, 0,
                  (struct sockaddr *)&client_addr, &client_addr_size);
+
+        if (strcmp(buff_rcv, "0x1A") == 0)
+            break;
         printf("%ld byte data (seq %d) received.\n", strlen(buff_rcv), seq);
+        write(fd, buff_rcv, strlen(buff_rcv));
         sendto(serverSocket, buff_snd, strlen(buff_snd) + 1, 0, // +1: NULL까지 포함해서 전송
                (struct sockaddr *)&client_addr, sizeof(client_addr));
         seq++;
     }
+    close(fd);
     close(serverSocket);
 }
