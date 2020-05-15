@@ -429,9 +429,15 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
     /* 3-2. get notUsingPage in pmem */
     KU_PTE *notUsingPage = getPageOrTableByPFN(notUsingPFN);
     /* 4. swap entry between swapSpaceParentPTE and notUsingParentPTE*/
+    printf("\n\n\n\n 111111111111111111111111\n");
+    printAllPmemAndSwap();
+    printf("\n\n\n\n");
     char tmpEntry = swapSpaceParentPTE->entry;
     setTableEntry(swapSpaceParentPTE, notUsingParentPTE->entry);
     setTableEntry(notUsingParentPTE, tmpEntry);
+    printf("\n\n\n\n 222222222222222222222222");
+    printAllPmemAndSwap();
+    printf("\n\n\n\n");
     /* 5. swap 2page's entry */
     for (int i = 0; i < PAGE_OFFSET; i++)
     {
@@ -439,6 +445,9 @@ int swapBeetweenPage(KU_PTE *swapSpaceParentPTE)
         setTableEntry(swapSpacePage + i, (notUsingPage + i)->entry);
         setTableEntry(notUsingPage + i, tmpEntry);
     }
+    printf("\n\n\n\n3333333333333333333333333");
+    printAllPmemAndSwap();
+    printf("\n\n\n\n");
     /* 6. add FreeListElement for swap-in page */
     addFreeListElement(notUsingPage, notUsingPFN, NULL, getTrailerOfFreeList());
     popFreeListElement();
